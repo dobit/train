@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{898346E0-D427-4976-A13C-1BD6156AEF91}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LFNet.TrainTicket</RootNamespace>
+    <AssemblyName>LFNet.TrainTicket</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>sn.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.JScript" />
+    <Reference Include="Newtonsoft.Json, Version=4.0.8.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Base\ReferenceAssemblies\Newtonsoft.Json\Net35\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Account.cs" />
+    <Compile Include="Cracker.cs" />
+    <Compile Include="Config\PayType.cs" />
+    <Compile Include="Entity\CardType.cs" />
+    <Compile Include="Config\BuyMode.cs" />
+    <Compile Include="Config\BuyTicketConfig.cs" />
+    <Compile Include="Config\OrderRequest.cs" />
+    <Compile Include="Global.cs" />
+    <Compile Include="HttpMethod.cs" />
+    <Compile Include="HttpRequest.cs" />
+    <Compile Include="IQuery.cs" />
+    <Compile Include="Config\Passenger.cs" />
+    <Compile Include="JHttpRequest.cs" />
+    <Compile Include="Mp3.cs" />
+    <Compile Include="RqEntity\resState.cs" />
+    <Compile Include="RqEntity\LoginAysnSuggestInfo.cs" />
+    <Compile Include="LoginQuery.cs" />
+    <Compile Include="QueryTrainInfo.cs" />
+    <Compile Include="Config\TrainItemInfo.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RqEntity\PassengerInfo.cs" />
+    <Compile Include="RqEntity\ResYpInfo.cs" />
+    <Compile Include="Entity\SeatType.cs" />
+    <Compile Include="Entity\StationInfo.cs" />
+    <Compile Include="TextValue.cs" />
+    <Compile Include="Entity\TicketType.cs" />
+    <Compile Include="TicketBuyer.cs" />
+    <Compile Include="AutoVCodeType.cs" />
+    <Compile Include="TicketSetting.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="VCodeForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Entity\SeatDetailType.cs" />
+    <Compile Include="RqEntity\WaitResponse.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sn.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="VCodeForm.resx">
+      <DependentUpon>VCodeForm.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="AxWMPLib">
+      <Guid>{6BF52A50-394A-11D3-B153-00C04F79FAA6}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>aximp</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+    <COMReference Include="MSScriptControl">
+      <Guid>{0E59F1D2-1FBE-11D0-8FF2-00A0D10038BC}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="WMPLib">
+      <Guid>{6BF52A50-394A-11D3-B153-00C04F79FAA6}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="JavaScript1.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\LFNet.Common\LFNet.Common.csproj">
+      <Project>{00f65e3b-b7ad-42f2-a398-56d5cddfe125}</Project>
+      <Name>LFNet.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
