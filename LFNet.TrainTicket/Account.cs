@@ -73,10 +73,9 @@ namespace LFNet.TrainTicket
             string vcode = "";
             do
             {
-               
-                    Stream stream =
-                        HttpRequest.Create("https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=login&rand=sjrand",
-                                           "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie,
+
+                Stream stream = HttpRequest.Create("https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=login&rand=sjrand&0." + new Random().Next(100000000, 99999999) + new Random().Next(100000000, 99999999),
+                                           "https://kyfw.12306.cn/otn/login/init", Cookie,
                                            HttpMethod.GET, "", Proxy).GetStream();
                     Image image = Image.FromStream(stream);
                     vcode = GetVCodeByForm(image);

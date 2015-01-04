@@ -1,18 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Text;
+using LFNet.Net.Http;
 using LFNet.TrainTicket;
 using LFNet.TrainTicket.Config;
-
+using System.Net.Http;
 namespace Test
 {
     class Program
     {
         static void Main(string[] args)
         {
+           
+            TestClass testClass=new TestClass()
+            {
+                Method = 2,
+                Type = "GC",
+                Name = "张三",
+                Data = new List<string>() { "1","2","3"}
+            };
+            ObjectFormUrlEncodedContent objectFormUrlEncodedContent=new ObjectFormUrlEncodedContent(testClass);
+            string content= objectFormUrlEncodedContent.ReadAsStringAsync().Result;
+            Console.WriteLine(content);
+            Console.ReadLine();
+
+
+
             System.Net.ServicePointManager.ServerCertificateValidationCallback =(sender, certificate, chain, errors) => true;
 
             //IPAddress[] ipAddresses = System.Net.Dns.GetHostAddresses("dynamic.12306.cn");
@@ -53,6 +72,19 @@ namespace Test
             Console.ReadLine();
 
 
+        }
+
+
+        public class  TestClass
+        {
+            public string Name { get; set; }
+            public string Type { get; set; }
+
+            public int Method { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public List<string> Data { get; set; } 
         }
     }
 }

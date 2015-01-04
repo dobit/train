@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LFNet.Common", "..\Common\LFNet.Common\LFNet.Common.csproj", "{00F65E3B-B7AD-42F2-A398-56D5CDDFE125}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LFNet.Net.Http", "LFNet.Net.Http\LFNet.Net.Http.csproj", "{173A16B4-448E-4752-B944-97FC9EB84EAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -130,6 +132,31 @@ Global
 		{00F65E3B-B7AD-42F2-A398-56D5CDDFE125}.ReleaseNet4|Mixed Platforms.ActiveCfg = ReleaseNet4|Any CPU
 		{00F65E3B-B7AD-42F2-A398-56D5CDDFE125}.ReleaseNet4|Mixed Platforms.Build.0 = ReleaseNet4|Any CPU
 		{00F65E3B-B7AD-42F2-A398-56D5CDDFE125}.ReleaseNet4|x86.ActiveCfg = ReleaseNet4|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.DebugNet4|Any CPU.ActiveCfg = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.DebugNet4|Any CPU.Build.0 = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.DebugNet4|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.DebugNet4|Mixed Platforms.Build.0 = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.DebugNet4|x86.ActiveCfg = Debug|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.Release|x86.ActiveCfg = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet35|Any CPU.ActiveCfg = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet35|Any CPU.Build.0 = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet35|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet35|Mixed Platforms.Build.0 = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet35|x86.ActiveCfg = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet4|Any CPU.ActiveCfg = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet4|Any CPU.Build.0 = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet4|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet4|Mixed Platforms.Build.0 = Release|Any CPU
+		{173A16B4-448E-4752-B944-97FC9EB84EAC}.ReleaseNet4|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
