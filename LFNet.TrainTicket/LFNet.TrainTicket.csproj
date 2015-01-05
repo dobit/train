@@ -10,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LFNet.TrainTicket</RootNamespace>
     <AssemblyName>LFNet.TrainTicket</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +31,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -45,6 +48,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -54,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Account.cs" />
+    <Compile Include="ActionUrls.cs" />
     <Compile Include="Cracker.cs" />
     <Compile Include="Config\PayType.cs" />
     <Compile Include="Entity\CardType.cs" />
@@ -67,6 +72,17 @@
     <Compile Include="Config\Passenger.cs" />
     <Compile Include="JHttpRequest.cs" />
     <Compile Include="Mp3.cs" />
+    <Compile Include="Request\CheckRandCodeAnsynRequest.cs" />
+    <Compile Include="Response\CheckOrderInfoResponse.cs" />
+    <Compile Include="Response\CheckRandCodeAnsyn.cs" />
+    <Compile Include="Response\CheckResponse.cs" />
+    <Compile Include="Response\ConfirmSingleForQueueResponse.cs" />
+    <Compile Include="Response\GetPassengerDTOs.cs" />
+    <Compile Include="Response\GetQueueCountResponse.cs" />
+    <Compile Include="Response\LoginAysnSuggest.cs" />
+    <Compile Include="Response\QueryOrderWaitTimeResponse.cs" />
+    <Compile Include="Response\QueryResponse.cs" />
+    <Compile Include="Response\ResultOrderForDcQueueResponse.cs" />
     <Compile Include="RqEntity\resState.cs" />
     <Compile Include="RqEntity\LoginAysnSuggestInfo.cs" />
     <Compile Include="LoginQuery.cs" />
@@ -90,6 +106,16 @@
     <Compile Include="RqEntity\WaitResponse.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Response\resultOrderForDcQueue.json" />
+    <None Include="Response\queryOrderWaitTime.json" />
+    <None Include="Response\confirmSingleForQueue.json" />
+    <None Include="Response\getQueueCount.json" />
+    <None Include="Response\checkOrderInfo.json" />
+    <None Include="Response\getPassengerDTOs.json" />
+    <None Include="Response\check.json" />
+    <None Include="Response\query.json" />
+    <None Include="Response\loginAysnSuggest.json" />
+    <None Include="Response\checkRandCodeAnsyn.json" />
     <None Include="sn.snk" />
   </ItemGroup>
   <ItemGroup>
@@ -126,12 +152,17 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="1.js" />
     <Content Include="JavaScript1.js" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Common\LFNet.Common\LFNet.Common.csproj">
       <Project>{00f65e3b-b7ad-42f2-a398-56d5cddfe125}</Project>
       <Name>LFNet.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LFNet.Net.Http\LFNet.Net.Http.csproj">
+      <Project>{173a16b4-448e-4752-b944-97fc9eb84eac}</Project>
+      <Name>LFNet.Net.Http</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

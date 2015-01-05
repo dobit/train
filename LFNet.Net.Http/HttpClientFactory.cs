@@ -14,7 +14,7 @@ namespace LFNet.Net.Http
         /// <param name="userAgent"></param>
         /// <param name="cookie"></param>
         /// <returns></returns>
-        public static JHttpClient Create(string referrer = "", string userAgent = "", CookieContainer cookie = null)
+        public static JHttpClient Create(string referrer = "", string userAgent = "", CookieContainer cookie = null, bool errorToTry = false)
         {
             //RulesString("&User-Agents", true) 
             //BindPref("fiddlerscript.ephemeral.UserAgentString")
@@ -44,9 +44,14 @@ namespace LFNet.Net.Http
             //RulesStringValue(23,"GoogleBot Crawler", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
             //RulesStringValue(24,"Kindle Fire (Silk)", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; en-us; Silk/1.0.22.79_10013310) AppleWebKit/533.16 (KHTML, like Gecko) Version/5.0 Safari/533.16 Silk-Accelerated=true")
             //RulesStringValue(25,"&Custom...", "%CUSTOM%")
-            
-            JHttpClient httpClient =cookie == null?new JHttpClient() : new JHttpClient(new HttpClientHandler {CookieContainer = cookie,UseCookies=true});
-            if(string.IsNullOrEmpty(referrer))httpClient.DefaultRequestHeaders.Referrer = new Uri(referrer);
+            JHttpClient httpClient;
+            if (errorToTry)
+            {
+                httpClient = cookie == null ? new JHttpClient(new RetryHandler(new HttpClientHandler())) : new JHttpClient(new RetryHandler(new HttpClientHandler { CookieContainer = cookie, UseCookies = true }));
+            }
+            else { httpClient = cookie == null ? new JHttpClient() : new JHttpClient(new HttpClientHandler { CookieContainer = cookie, UseCookies = true }); }
+
+            if (string.IsNullOrEmpty(referrer)) httpClient.DefaultRequestHeaders.Referrer = new Uri(referrer);
             if (string.IsNullOrEmpty(referrer)) httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
             return new JHttpClient();
         }
@@ -54,6 +59,6 @@ namespace LFNet.Net.Http
 
 
 
-        
+
     }
 }

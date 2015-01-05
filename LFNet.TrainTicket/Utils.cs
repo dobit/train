@@ -7,10 +7,17 @@ using MSScriptControl;
 using Newtonsoft.Json;
 using Microsoft.JScript;
 using Microsoft.JScript.Vsa;
+using LFNet.Net.Http;
 namespace LFNet.TrainTicket
 {
     public static class Utils
     {
+        public const string UserAgent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
+        public static LFNet.Net.Http.JHttpClient GetHttpClient(this Account account, string referrer)
+        {
+            return HttpClientFactory.Create(referrer, UserAgent, account.Cookie);
+        }
+
         /// <summary>
         /// 从Html中获取表单值
         /// </summary>
@@ -154,5 +161,56 @@ namespace LFNet.TrainTicket
            return scriptControl.Eval(js);
 
         }
+
+        /// <summary>
+        /// bin216加密
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public static string Bin216(string s)
+        {
+            string o = "";
+            string n="";
+            s += "";
+           // char b = ""; 0;// "";
+            for (int i = 0 ; i < s.Length; i++) {
+               int b = s[i];//.charCodeAt(i);
+                n = b.ToString("x2");//.toString(16);
+                o += n.Length < 2 ? "0" + n : n;
+            }
+            return o;
+        }
+
+     
+        public static string Encode32(string input) {
+          string  keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+             input = Common.HtmlUtil.UrlEncode(input); 
+            var output = ""; 
+            uint chr1, chr2, chr3;
+            uint enc1, enc2, enc3, enc4; 
+            var i = 0;
+            do
+            {
+                chr1 = input[i++]; 
+                chr2 = input[i++];
+                chr3 = input[i++]; 
+                enc1 = chr1 >> 2; 
+                enc2 = ((chr1 & 3) << 4) | (chr2 >> 4); 
+                enc3 = ((chr2 & 15) << 2) | (chr3 >> 6); 
+                enc4 = chr3 & 63;
+                if (chr2<'0'||chr2>'0')  //isNaN(chr2))
+                {
+                    enc3 = enc4 = (char)64;
+                } else if (chr3<'0'||chr3>'0')//isNaN(chr3))
+                {
+                    enc4 = (char)64;
+                } 
+                output = output + keyStr[enc1] + keyStr[enc2] + keyStr[enc3] + keyStr[enc4]; 
+                chr1 = chr2 = chr3 = 'a';
+                enc1 = enc2 = enc3 = enc4 ='a';
+            } while (i < input.Length); 
+            return output;
+        }
+
     }
 }

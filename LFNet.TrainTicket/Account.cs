@@ -4,15 +4,20 @@ using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using LFNet.TrainTicket.Config;
 using LFNet.TrainTicket.RqEntity;
+using LFNet.Net.Http;
+using Newtonsoft.Json;
 
 namespace LFNet.TrainTicket
 {
+
 
     public enum State
     {
@@ -44,7 +49,7 @@ namespace LFNet.TrainTicket
         public WebProxy Proxy { get; set; }
         private CookieContainer _cookie=new CookieContainer();
 
-        public JHttpClient JHttpClient { get; set; }
+       // public JHttpClient JHttpClient { get; set; }
         public CookieContainer Cookie
         {
             get { return _cookie; }
@@ -62,7 +67,7 @@ namespace LFNet.TrainTicket
             this.Password = password;
             if(!string.IsNullOrEmpty(proxyIp))
             Proxy = new WebProxy(proxyIp,443); //https代理
-            JHttpClient = new JHttpClient(Proxy) { Cookie=Cookie};
+          //  JHttpClient = new JHttpClient(Proxy) { Cookie=Cookie};
         }
         /// <summary>
         /// 获取登录时的验证码,自动重试当错误出现3次以上抛异常
@@ -74,9 +79,7 @@ namespace LFNet.TrainTicket
             do
             {
 
-                Stream stream = HttpRequest.Create("https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=login&rand=sjrand&0." + new Random().Next(100000000, 99999999) + new Random().Next(100000000, 99999999),
-                                           "https://kyfw.12306.cn/otn/login/init", Cookie,
-                                           HttpMethod.GET, "", Proxy).GetStream();
+                Stream stream = this.GetHttpClient(ActionUrls.LoginPageUrl).GetStreamAsync("https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=login&rand=sjrand&0." + new Random().Next(100000000, 99999999) + new Random().Next(100000000, 99999999)).Result;
                     Image image = Image.FromStream(stream);
                     vcode = GetVCodeByForm(image);
                
@@ -85,19 +88,29 @@ namespace LFNet.TrainTicket
         }
 
         /// <summary>
-        /// 获取登录随机数
+        /// 检查验证码有效性
         /// </summary>
+        /// <param name="randCode"></param>
         /// <returns></returns>
-        public string GetLoginRand()
+        public CheckRandCodeAnsynResponse CheckRandCodeAnsyn(string randCode)
         {
-            
-            LoginAysnSuggestInfo loginAysnSuggestInfo = HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest", "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<LoginAysnSuggestInfo>();
-            if (loginAysnSuggestInfo != null && loginAysnSuggestInfo.RandError == "Y")
-            {
-                return loginAysnSuggestInfo.LoginRand;
-            }
-            return "";
+          return   this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync("https://kyfw.12306.cn/otn/passcodeNew/checkRandCodeAnsyn",
+                    new { randCode, rand = "sjrand", randCode_validate = "" }).Result.Content.ReadAsStringAsync().Result.ToJsonObject<CheckRandCodeAnsynResponse>();
         }
+        ///// <summary>
+        ///// 获取登录随机数
+        ///// </summary>
+        ///// <returns></returns>
+        //public string GetLoginRand()
+        //{
+            
+        //    LoginAysnSuggestInfo loginAysnSuggestInfo = HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest", "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<LoginAysnSuggestInfo>();
+        //    if (loginAysnSuggestInfo != null && loginAysnSuggestInfo.RandError == "Y")
+        //    {
+        //        return loginAysnSuggestInfo.LoginRand;
+        //    }
+        //    return "";
+        //}
 
         /// <summary>
         /// 检查服务器状态
@@ -141,6 +154,9 @@ namespace LFNet.TrainTicket
         /// <returns></returns>
         public bool Login(string loginRand,string vcode)
         {
+            loginUserDTO.user_name=mydobit&userDTO.password=03265791&randCode=6eed&randCode_validate=&OTU2MzI1=YzRhNGM5ZTdmODI2MjczZg%3D%3D&myversion=undefined
+
+
             System.Collections.Specialized.NameValueCollection forms = new NameValueCollection();
             forms["loginRand"] = loginRand;
             forms["refundLogin"] = "N";
@@ -192,29 +208,29 @@ namespace LFNet.TrainTicket
             IsLogin = false;
         }
 
-        public NameValueCollection  DynamicJsAction()
-        {
-            string jsContent = JHttpClient.GetString(
-                "https://dynamic.12306.cn/otsweb/dynamicJsAction.do?jsversion=5520&method=loginJs", null,
-                "https://dynamic.12306.cn/otsweb/loginAction.do?method=init");
-            System.Text.RegularExpressions.Regex jsregex=new Regex(@"(function\sbin216(.*?))function\saj()");
-            string js = jsregex.Replace(jsContent, "$1");
-            System.Text.RegularExpressions.Regex keyregex = new Regex(@"var\s*?key\s*?=[""']([A-Za-z0-9+/=]*?)[""'];");
-            string key = keyregex.Replace(jsContent, "$1");
-            int cnt = new Regex(@"value\+='0';").Matches(jsContent).Count;
-            string value = "";
-            for (int i = 0; i < cnt; i++)
-            {
-                value += "0";
-            }
+        //public NameValueCollection  DynamicJsAction()
+        //{
+        //    string jsContent = JHttpClient.GetString(
+        //        "https://dynamic.12306.cn/otsweb/dynamicJsAction.do?jsversion=5520&method=loginJs", null,
+        //        "https://dynamic.12306.cn/otsweb/loginAction.do?method=init");
+        //    System.Text.RegularExpressions.Regex jsregex=new Regex(@"(function\sbin216(.*?))function\saj()");
+        //    string js = jsregex.Replace(jsContent, "$1");
+        //    System.Text.RegularExpressions.Regex keyregex = new Regex(@"var\s*?key\s*?=[""']([A-Za-z0-9+/=]*?)[""'];");
+        //    string key = keyregex.Replace(jsContent, "$1");
+        //    int cnt = new Regex(@"value\+='0';").Matches(jsContent).Count;
+        //    string value = "";
+        //    for (int i = 0; i < cnt; i++)
+        //    {
+        //        value += "0";
+        //    }
 
-            value = Utils.ExcuteJScript(js + ";" + "encode32(bin216(Base32.encrypt('" + value + "', '" + key + "')));");
+        //    value = Utils.ExcuteJScript(js + ";" + "encode32(bin216(Base32.encrypt('" + value + "', '" + key + "')));");
 
-            NameValueCollection nv=new NameValueCollection();
-            nv[key] = value;
-            nv["myversion"] = "undefined";
-            return nv;
-        }
+        //    NameValueCollection nv=new NameValueCollection();
+        //    nv[key] = value;
+        //    nv["myversion"] = "undefined";
+        //    return nv;
+        //}
 
         /// <summary>
         /// https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest
@@ -769,6 +785,9 @@ namespace LFNet.TrainTicket
            
 
         }
+
+
+
         /// <summary>
         /// 查询余票,确保trainItemInfo.YpInfoDetailReal已经获取
         /// </summary>
@@ -881,6 +900,7 @@ namespace LFNet.TrainTicket
             }
             //    return base.ToString();
         }
+
     }
     /// <summary>
     /// 验证码类型

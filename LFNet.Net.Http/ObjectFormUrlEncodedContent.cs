@@ -3,9 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
-using LFNet.Common.Reflection;
-
+using System.Linq;
+using System.Xml.Serialization;
 namespace LFNet.Net.Http
 {
     /// <summary>
@@ -13,16 +14,51 @@ namespace LFNet.Net.Http
     /// </summary>
     public class ObjectFormUrlEncodedContent : FormUrlEncodedContent
     {
+        static Dictionary<Type, PropertyInfo[]> typePropertyInfoses = new Dictionary<Type, PropertyInfo[]>(); 
+
         public ObjectFormUrlEncodedContent(object obj,bool lcasePropetyName=false)
             : base(GetKeyValuePairs(obj, lcasePropetyName))
         {
             //this.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
         }
 
-        private static IEnumerable<KeyValuePair<string, string>> GetKeyValuePairs(object obj, bool lcasePropetyName)
+        private static IEnumerable<KeyValuePair<string, string>> GetKeyValuePairs(object inonObject, bool lcasePropetyName)
         {
+
+           // if (inonObject == null) return nameValueCollection;
+
             Dictionary<string, object> keyObjects = new Dictionary<string, object>();
-            LFNet.Common.Reflection.ObjectCopier.Copy(obj, keyObjects);
+            Type type = inonObject.GetType();
+            PropertyInfo[] propertyInfos;
+            if (typePropertyInfoses.ContainsKey(type))
+            {
+                propertyInfos = typePropertyInfoses[type];
+            }
+            else
+            {
+                propertyInfos = inonObject.GetType().GetProperties().Where(p => p.CanRead).ToArray();
+                typePropertyInfoses.Add(type, propertyInfos);
+            }
+            foreach (PropertyInfo propertyInfo in propertyInfos)
+            {
+                string keyname = propertyInfo.Name;
+               var attribs = propertyInfo.GetCustomAttributes(typeof(XmlElementAttribute), true);
+                if (attribs.Length > 0)
+                {
+                    var attrib = (XmlElementAttribute)attribs[0];
+                    if (string.IsNullOrEmpty(attrib.ElementName)) keyname = attrib.ElementName;
+                }
+                
+                //var attribs = propertyInfo.GetCustomAttributes(typeof(), true);
+                //if (attribs.Length > 0)
+                //{
+                //    var attrib = (XmlElementAttribute)attribs[0];
+                //    if (string.IsNullOrEmpty(attrib.ElementName)) keyname = attrib.ElementName;
+                //}
+               // if ()
+                keyObjects.Add(keyname, propertyInfo.GetValue(inonObject, new object[] { }));
+            }
+            //LFNet.Common.Reflection.ObjectCopier.Copy(inonObject, keyObjects);
             foreach (KeyValuePair<string, object> keyValuePair in keyObjects)
             {
                 if (keyValuePair.Value == null)
