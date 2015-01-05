@@ -17,17 +17,17 @@ namespace Test
     {
         static void Main(string[] args)
         {
-           
-            TestClass testClass=new TestClass()
-            {
-                Method = 2,
-                Type = "GC",
-                Name = "张三",
-                Data = new List<string>() { "1","2","3"}
-            };
-            ObjectFormUrlEncodedContent objectFormUrlEncodedContent=new ObjectFormUrlEncodedContent(testClass);
-            string content= objectFormUrlEncodedContent.ReadAsStringAsync().Result;
-            Console.WriteLine(content);
+            ;
+
+            Console.WriteLine("bin216:"+Utils.Bin216("123456"));
+            Console.WriteLine("Encode32:" + Utils.Encode32("123456"));
+            var data = new Base32().stringToLongArray("1234567",true);
+            Console.WriteLine("stringToLongArray:" + string.Join(",", data));
+            Console.WriteLine("longArrayToString:" + new Base32().longArrayToString(data, true));
+            Console.WriteLine("Base32:" + new Base32().encrypt("0000", "ABC123"));
+
+
+            Console.WriteLine("encode:" + Utils.Encode32(Utils.Bin216(new Base32().encrypt("0000", "NjY1NjIy"))));
             Console.ReadLine();
 
 

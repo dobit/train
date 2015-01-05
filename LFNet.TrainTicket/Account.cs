@@ -154,7 +154,7 @@ namespace LFNet.TrainTicket
         /// <returns></returns>
         public bool Login(string loginRand,string vcode)
         {
-            loginUserDTO.user_name=mydobit&userDTO.password=03265791&randCode=6eed&randCode_validate=&OTU2MzI1=YzRhNGM5ZTdmODI2MjczZg%3D%3D&myversion=undefined
+           // loginUserDTO.user_name=mydobit&userDTO.password=03265791&randCode=6eed&randCode_validate=&OTU2MzI1=YzRhNGM5ZTdmODI2MjczZg%3D%3D&myversion=undefined
 
 
             System.Collections.Specialized.NameValueCollection forms = new NameValueCollection();
