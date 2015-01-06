@@ -21,38 +21,41 @@ namespace LFNet.TrainTicket.Config
         [DisplayName("历时")]
         public string lishi { get; set; }
 
+        /// <summary>
+        /// 商务座
+        /// </summary>
         [DisplayName("商务座")]
-        public string ShangwuSeat { get; set; }
+        public string swz_num { get; set; }
 
         [DisplayName("特等座")]
-        public string TedengSeat { get; set; }
+        public string tz_num { get; set; }
 
         [DisplayName("一等座")]
-        public string YidengSeat { get; set; }
+        public string zy_num { get; set; }
 
         [DisplayName("二等座")]
-        public string ErdengSeat { get; set; }
+        public string ze_num { get; set; }
 
         [DisplayName("高级软卧")]
-        public string GaojiRuanwoSeat { get; set; }
+        public string gr_num { get; set; }
 
         [DisplayName("软卧")]
-        public string RuanwoSeat { get; set; }
+        public string rw_num { get; set; }
 
         [DisplayName("硬卧")]
-        public string YingwoSeat { get; set; }
+        public string yw_num { get; set; }
 
         [DisplayName("软座")]
-        public string RuanzuoSeat { get; set; }
+        public string rz_num { get; set; }
 
         [DisplayName("硬座")]
-        public string YingzuoSeat { get; set; }
+        public string yz_num { get; set; }
 
         [DisplayName("无座")]
-        public string WuzuoSeat { get; set; }
+        public string wz_num { get; set; }
 
         [DisplayName("其他")]
-        public string OtherSeat { get; set; }
+        public string qt_num { get; set; }
 
        
         public string Tag { get; set; }
@@ -99,16 +102,16 @@ namespace LFNet.TrainTicket.Config
 
         public string ToStringWithNoStation()
         {
-            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}", TrainNo, lishi, ShangwuSeat, TedengSeat, YidengSeat,
-                                 ErdengSeat, GaojiRuanwoSeat, RuanwoSeat, YingwoSeat, RuanzuoSeat, YingzuoSeat,
-                                 WuzuoSeat, OtherSeat);
+            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}", TrainNo, lishi, swz_num, tz_num, zy_num,
+                                 ze_num, gr_num, rw_num, yw_num, rz_num, yz_num,
+                                 wz_num, qt_num);
         }
       
         public override string ToString()
         {
-            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}", TrainNo, StartStation, EndStation, lishi, ShangwuSeat, TedengSeat, YidengSeat,
-                                 ErdengSeat, GaojiRuanwoSeat, RuanwoSeat, YingwoSeat, RuanzuoSeat, YingzuoSeat,
-                                 WuzuoSeat, OtherSeat);
+            return string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}", TrainNo, StartStation, EndStation, lishi, swz_num, tz_num, zy_num,
+                                 ze_num, gr_num, rw_num, yw_num, rz_num, yz_num,
+                                 wz_num, qt_num);
         }
 
         /// <summary>
@@ -123,31 +126,31 @@ namespace LFNet.TrainTicket.Config
             switch (seatType)
             {
                 case SeatType.硬座:
-                    numStr = YingzuoSeat;
+                    numStr = yz_num;
                     break;
                 case SeatType.软座:
-                    numStr = RuanzuoSeat;
+                    numStr = rz_num;
                     break;
                 case SeatType.硬卧:
-                    numStr = YingwoSeat;
+                    numStr = yw_num;
                     break;
                 case SeatType.软卧:
-                    numStr = RuanwoSeat;
+                    numStr = rw_num;
                     break;
                 case SeatType.高级软卧:
-                    numStr = GaojiRuanwoSeat;
+                    numStr = gr_num;
                     break;
                 case SeatType.商务座:
-                    numStr = ShangwuSeat;
+                    numStr = swz_num;
                     break;
                 case SeatType.一等座:
-                    numStr = YidengSeat;
+                    numStr = zy_num;
                     break;
                 case SeatType.二等座:
-                    numStr = ErdengSeat;
+                    numStr = ze_num;
                     break;
                 case SeatType.特等座:
-                    numStr = TedengSeat;
+                    numStr = tz_num;
                     break;
                 case SeatType.观光座:
                     return 0;
@@ -156,7 +159,7 @@ namespace LFNet.TrainTicket.Config
                     return 0;
                     break;
                 default:
-                    numStr = WuzuoSeat;
+                    numStr = wz_num;
                     //return 0;
                     break;
             }
@@ -231,31 +234,31 @@ namespace LFNet.TrainTicket.Config
                     switch (c_seat)
                     {
                         case SeatType.硬座:
-                            YingzuoSeat = numStr;
+                            yz_num = numStr;
                             break;
                         case SeatType.软座:
-                            RuanzuoSeat = numStr;
+                            rz_num = numStr;
                             break;
                         case SeatType.硬卧:
-                            YingwoSeat = numStr;
+                            yw_num = numStr;
                             break;
                         case SeatType.软卧:
-                            RuanwoSeat = numStr;
+                            rw_num = numStr;
                             break;
                         case SeatType.高级软卧:
-                            GaojiRuanwoSeat = numStr;
+                            gr_num = numStr;
                             break;
                         case SeatType.商务座:
-                            ShangwuSeat = numStr;
+                            swz_num = numStr;
                             break;
                         case SeatType.一等座:
-                            YidengSeat = numStr;
+                            zy_num = numStr;
                             break;
                         case SeatType.二等座:
-                            ErdengSeat = numStr;
+                            ze_num = numStr;
                             break;
                         case SeatType.特等座:
-                            TedengSeat = numStr;
+                            tz_num = numStr;
                             break;
                         case SeatType.观光座:
 
@@ -270,7 +273,7 @@ namespace LFNet.TrainTicket.Config
                 else if(count>3000)
                 {
                     count -= 3000;
-                    WuzuoSeat = count.ToString();
+                    wz_num = count.ToString();
                 }
                 i += 10;
             }

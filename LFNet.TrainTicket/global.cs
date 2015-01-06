@@ -10,7 +10,7 @@ namespace LFNet.TrainTicket
 
         private static string[] LC_LeiBies = new string[]
                                                {
-                                                   "全部|QB","动车|D","Z字头|Z","T字头|T","K字头|K","其他|QT",
+                                                   "全部|QB","高铁|G","城铁|C","动车|D","Z字头|Z","T字头|T","K字头|K","其他|QT",
                                                };
 
         private static string[] trainPassTypes = new string[]

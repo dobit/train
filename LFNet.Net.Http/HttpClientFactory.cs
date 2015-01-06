@@ -47,13 +47,14 @@ namespace LFNet.Net.Http
             JHttpClient httpClient;
             if (errorToTry)
             {
-                httpClient = cookie == null ? new JHttpClient(new RetryHandler(new HttpClientHandler())) : new JHttpClient(new RetryHandler(new HttpClientHandler { CookieContainer = cookie, UseCookies = true }));
+                httpClient = cookie == null ? new JHttpClient(new RetryHandler(new HttpClientHandler(){AutomaticDecompression=DecompressionMethods.GZip|DecompressionMethods.Deflate})) : new JHttpClient(new RetryHandler(new HttpClientHandler { CookieContainer = cookie, UseCookies = true,AutomaticDecompression=DecompressionMethods.GZip|DecompressionMethods.Deflate }));
             }
-            else { httpClient = cookie == null ? new JHttpClient() : new JHttpClient(new HttpClientHandler { CookieContainer = cookie, UseCookies = true }); }
+            else { httpClient = cookie == null ? new JHttpClient(new HttpClientHandler(){AutomaticDecompression=DecompressionMethods.GZip|DecompressionMethods.Deflate}) : new JHttpClient(new HttpClientHandler { CookieContainer = cookie, UseCookies = true, AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate }); }
 
-            if (string.IsNullOrEmpty(referrer)) httpClient.DefaultRequestHeaders.Referrer = new Uri(referrer);
-            if (string.IsNullOrEmpty(referrer)) httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
-            return new JHttpClient();
+            if (!string.IsNullOrEmpty(referrer)) httpClient.DefaultRequestHeaders.Referrer = new Uri(referrer);
+            if (!string.IsNullOrEmpty(userAgent)) httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
+            
+            return httpClient;
         }
 
 

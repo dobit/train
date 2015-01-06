@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using AxWMPLib;
+using LFNet.Configuration;
 using LFNet.TrainTicket.Config;
 using LFNet.TrainTicket.RqEntity;
 
@@ -183,8 +184,8 @@ namespace LFNet.TrainTicket
             //先获取乘客
             try
             {
-                ResPassengerJsonInfo passengerJsonInfo = account.GetPassengers();
-                foreach (PassengerJsonInfo jsonInfo in passengerJsonInfo.PassengerJson)
+                GetPassengerDTOs passengerJsonInfo = account.GetPassengers();
+                foreach (NormalPassenger jsonInfo in passengerJsonInfo.normal_passengers)
                 {
                     var find = Config.BuyTicketConfig.Instance.Passengers.Find(p => p.Name == jsonInfo.passenger_name);
                     if (find == null)
@@ -216,7 +217,7 @@ namespace LFNet.TrainTicket
                 Log(account,ex);
             }
 
-            List<TrainItemInfo> list = new List<TrainItemInfo>();
+            List<TrainItemInfo> querylist = new List<TrainItemInfo>();
             while ( !Stop)
             {
                 
@@ -231,9 +232,11 @@ namespace LFNet.TrainTicket
                     //        Log(account, "下单验证码：" + vcode);
                     //}
                     Log(account, "查询余票信息");
-                    list = account.QueryTrainInfos(list);
-                    Log(account, "找到" + list.Count + "趟列车");
 
+                    querylist = account.QueryTrainInfos(querylist);
+                    var list = Filter(querylist);
+                    Log(account, "返回" + querylist.Count + "趟列车，筛选");
+                    
                     if (list.Count > 0)
                     {
 
@@ -293,8 +296,14 @@ namespace LFNet.TrainTicket
                                     }
                                     Passenger[] passengers =
                                         Config.BuyTicketConfig.Instance.Passengers.Where(p => p.Checked).ToArray();
+                                    //检查用户状态
+                                    if (!account.CheckUser()) //失败则再登录
+                                    {
+                                        Log(account,"需要重新登录");
+                                        account.Login();
+                                    }
                                 SubmitOrderRequest:
-                                    NameValueCollection htmlForm = account.SubmitOrderRequest(optimizeTrain, passengers
+                                    var htmlForm = account.SubmitOrderRequest(optimizeTrain, passengers
                                                                                               , seatType == SeatType.无座
                                                                                                   ? SeatType.硬座
                                                                                                   : seatType);
@@ -309,12 +318,12 @@ namespace LFNet.TrainTicket
                                     {
                                         break;
                                     }
-                                    //account.GetVerifyCode(VCodeType.SubmitOrder);
-                                    ResPassengerJsonInfo resPassengerJsonInfo = account.GetPassengers(); //获取乘客信息
-                                    if (Stop)
-                                    {
-                                        break;
-                                    }
+                                    ////account.GetVerifyCode(VCodeType.SubmitOrder);
+                                    //GetPassengerDTOs resPassengerJsonInfo = account.GetPassengers(); //获取乘客信息
+                                    //if (Stop)
+                                    //{
+                                    //    break;
+                                    //}
 
                                     int span = 10;// 10;
                                 GETVCode:
@@ -323,11 +332,15 @@ namespace LFNet.TrainTicket
                                     
                                         Stopwatch stopwatch = new Stopwatch();
                                         stopwatch.Start();
-                                         vcode = account.GetVerifyCode(VCodeType.SubmitOrder, ref autoVcode);
-                                        if (vcode == "BREAK") continue;
+                                    do
+                                    {
+                                        vcode = account.GetOrderVCode();
+                                        //.GetVerifyCode(VCodeType.SubmitOrder, ref autoVcode);
+                                        if (vcode == "BREAK") break;
+                                    } while (account.CheckRandCodeAnsyn(vcode, 1, htmlForm["REPEAT_SUBMIT_TOKEN"])); 
 
-
-                                        int st = (int) (span*1000 - stopwatch.ElapsedMilliseconds);
+                                    if (vcode == "BREAK") continue;
+                                    int st = (int) (span*1000 - stopwatch.ElapsedMilliseconds);
                                         if (st > 0)
                                             Thread.Sleep(st); //验证码输入耗时 4s
                                         span = 2;
@@ -640,6 +653,31 @@ namespace LFNet.TrainTicket
            StopAll();
 
         }
+
+        private List<TrainItemInfo> Filter(List<TrainItemInfo> querylist)
+        {
+            var result = new List<TrainItemInfo>();
+            BuyTicketConfig buyTicketConfig = ConfigFileManager.GetConfig<BuyTicketConfig>();
+            string trainClass =buyTicketConfig .OrderRequest.TrainClass;
+            string[] startTimeStrs = buyTicketConfig.OrderRequest.StartTimeStr.Split(new []{'-'},StringSplitOptions.RemoveEmptyEntries);
+            TimeSpan startTime = TimeSpan.Parse(startTimeStrs[0]);
+            TimeSpan endTime = TimeSpan.Parse(startTimeStrs[1]);
+           
+            foreach (var trainItemInfo in querylist)
+            {
+                string pc = trainItemInfo.TrainNo.Substring(0, 1);
+                if (string.IsNullOrEmpty(trainClass) || trainClass.Contains(pc + ",") ||
+                    (trainClass.Contains("QT,") && pc[0] >= '0' && pc[0] <= '9'))
+                {
+                     TimeSpan timeSpan =TimeSpan.Parse(trainItemInfo.TrainStartTime);
+                    if (timeSpan >= startTime && timeSpan <= endTime)
+                    {
+                        result.Add(trainItemInfo);
+                    }
+                }
+            }
+            return result;
+        }
         
 
         private Mp3 soundPlayer;
@@ -720,7 +758,7 @@ namespace LFNet.TrainTicket
                 {
                     try
                     {
-                        account.Login(ref autoVcode);
+                        account.Login(autoVcode);
                     }
                     catch (Exception exception)
                     {
@@ -794,7 +832,7 @@ namespace LFNet.TrainTicket
                 soundPlayer = null;
             }
 
-            if (System.Threading.Thread.CurrentThread != t)
+            if (t!=null&&System.Threading.Thread.CurrentThread != t)
             {
                 int i = 0;
                 while (i < 5000 && t.IsAlive)

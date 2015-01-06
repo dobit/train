@@ -25,5 +25,11 @@ namespace LFNet.TrainTicket
         public ValidateMessages validateMessages { get; set; }
     }
 
-    
+    /// <summary>
+    /// 检查用户返回消息
+    /// </summary>
+    public class CheckUserResponse
+    {
+        public  bool flag { get; set; }
+    }
 }

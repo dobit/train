@@ -12,6 +12,8 @@ namespace LFNet.TrainTicket
         static void Main()
         {
             System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+            System.Net.ServicePointManager.Expect100Continue = false;
+            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);

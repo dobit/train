@@ -14,9 +14,15 @@ namespace LFNet.TrainTicket
     public static class Utils
     {
         public const string UserAgent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
-        public static LFNet.Net.Http.JHttpClient GetHttpClient(this Account account, string referrer)
+        public static LFNet.Net.Http.JHttpClient GetHttpClient(this Account account, string referrer,bool isAjax=false)
         {
-            return HttpClientFactory.Create(referrer, UserAgent, account.Cookie);
+            Net.Http.JHttpClient httpClient = HttpClientFactory.Create(referrer, UserAgent, account.Cookie);
+
+            httpClient.DefaultRequestHeaders.Add("X-Requested-With","XMLHttpRequest");
+            httpClient.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.8");
+            httpClient.DefaultRequestHeaders.Add("Origin"," https://kyfw.12306.cn");
+            httpClient.DefaultRequestHeaders.Add("Connection","keep-alive");
+            return httpClient;
         }
 
         /// <summary>

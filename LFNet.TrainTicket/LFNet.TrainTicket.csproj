@@ -95,7 +95,6 @@
     <Compile Include="Entity\StationInfo.cs" />
     <Compile Include="TextValue.cs" />
     <Compile Include="Entity\TicketType.cs" />
-    <Compile Include="TicketBuyer.cs" />
     <Compile Include="AutoVCodeType.cs" />
     <Compile Include="TicketSetting.cs" />
     <Compile Include="Utils.cs" />

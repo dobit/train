@@ -18,27 +18,15 @@ namespace LFNet.TrainTicket.Controls
                 string ret = "";
                 if(cbQB.Checked)
                 {
-                    ret += "QB#";
+                    return "";
                 }
-                if (cbD.Checked)
+                foreach (Control control in this.panel2.Controls)
                 {
-                    ret += "D#";
-                }
-                if(cbZ.Checked)
-                {
-                    ret += "Z#";
-                }
-                if (cbT.Checked)
-                {
-                    ret += "T#";
-                }
-                if (cbK.Checked)
-                {
-                    ret += "K#";
-                }
-                if (cbQT.Checked)
-                {
-                    ret += "QT#";
+                    var checkBox = control as CheckBox;
+                    if (checkBox != null&&checkBox.Checked)
+                    {
+                        ret += control.Name.Replace("cb", "")+",";
+                    }
                 }
                 return ret;
             }
@@ -62,11 +50,24 @@ namespace LFNet.TrainTicket.Controls
                         var checkBox = control as CheckBox;
                         if (checkBox != null)
                         {
-                            checkBox.Checked = value.Contains(checkBox.Name.Replace("cb", "") + "#");
+                            checkBox.Checked = value.Contains(checkBox.Name.Replace("cb", "") + ",");
                         }
                     }
                 }
 
+            }
+        }
+
+        private void cbQB_CheckedChanged(object sender, System.EventArgs e)
+        {
+            var v = cbQB.Checked;
+            foreach (Control control in this.panel2.Controls)
+            {
+                var checkBox = control as CheckBox;
+                if (checkBox != null)
+                {
+                    checkBox.Checked = v;
+                }
             }
         }
     }

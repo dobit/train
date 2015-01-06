@@ -12,11 +12,11 @@ namespace LFNet.Net.Http
     /// <summary>
     /// 对象以表单形式提交
     /// </summary>
-    public class ObjectFormUrlEncodedContent : FormUrlEncodedContent
+    public class UrlEncodedContent : FormUrlEncodedContent
     {
         static Dictionary<Type, PropertyInfo[]> typePropertyInfoses = new Dictionary<Type, PropertyInfo[]>(); 
 
-        public ObjectFormUrlEncodedContent(object obj,bool lcasePropetyName=false)
+        public UrlEncodedContent(object obj,bool lcasePropetyName=false)
             : base(GetKeyValuePairs(obj, lcasePropetyName))
         {
             //this.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
@@ -61,7 +61,7 @@ namespace LFNet.Net.Http
             //LFNet.Common.Reflection.ObjectCopier.Copy(inonObject, keyObjects);
             foreach (KeyValuePair<string, object> keyValuePair in keyObjects)
             {
-                if (keyValuePair.Value == null)
+                if (keyValuePair.Value != null)
                 {
                     if (keyValuePair.Value is string)
                     {
@@ -91,6 +91,14 @@ namespace LFNet.Net.Http
                     yield return new KeyValuePair<string, string>(lcasePropetyName ? keyValuePair.Key.ToLower() : keyValuePair.Key,"");
                 }
             }
+        }
+    }
+
+    public static class Extension
+    {
+        public static UrlEncodedContent ToUrlEncodedContent(this object obj,bool lcasePropetyName=false)
+        {
+            return new UrlEncodedContent(obj,lcasePropetyName);
         }
     }
 }

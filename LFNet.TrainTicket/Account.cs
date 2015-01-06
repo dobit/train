@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using LFNet.Configuration;
 using LFNet.TrainTicket.Config;
 using LFNet.TrainTicket.RqEntity;
 using LFNet.Net.Http;
@@ -44,12 +48,12 @@ namespace LFNet.TrainTicket
     {
 
         public string Username { get; private set; }
-        public string Password { get; private  set; }
+        public string Password { get; private set; }
         //public AccountInfo AccountInfo { get { return Config.BuyTicketConfig.Instance.AccountInfo; } }
         public WebProxy Proxy { get; set; }
-        private CookieContainer _cookie=new CookieContainer();
+        private CookieContainer _cookie = new CookieContainer();
 
-       // public JHttpClient JHttpClient { get; set; }
+        // public JHttpClient JHttpClient { get; set; }
         public CookieContainer Cookie
         {
             get { return _cookie; }
@@ -58,17 +62,19 @@ namespace LFNet.TrainTicket
 
         public bool IsLogin { get; private set; }
 
-        public Account(string userName,string password):this(userName,password,null)
+        public Account(string userName, string password)
+            : this(userName, password, null)
         {
         }
         public Account(string userName, string password, string proxyIp)
         {
             this.Username = userName;
             this.Password = password;
-            if(!string.IsNullOrEmpty(proxyIp))
-            Proxy = new WebProxy(proxyIp,443); //https代理
-          //  JHttpClient = new JHttpClient(Proxy) { Cookie=Cookie};
+            if (!string.IsNullOrEmpty(proxyIp))
+                Proxy = new WebProxy(proxyIp, 443); //https代理
+            //  JHttpClient = new JHttpClient(Proxy) { Cookie=Cookie};
         }
+
         /// <summary>
         /// 获取登录时的验证码,自动重试当错误出现3次以上抛异常
         /// </summary>
@@ -78,32 +84,40 @@ namespace LFNet.TrainTicket
             string vcode = "";
             do
             {
+                //https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp& 
+                Stream stream = this.GetHttpClient(ActionUrls.LoginPageUrl).GetStreamAsync("https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=login&rand=sjrand&0." + new Random().Next(10000000, 99999999) + new Random().Next(10000000, 99999999)).Result;
+                Image image = Image.FromStream(stream);
+                vcode = GetVCodeByForm(image);
 
-                Stream stream = this.GetHttpClient(ActionUrls.LoginPageUrl).GetStreamAsync("https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=login&rand=sjrand&0." + new Random().Next(100000000, 99999999) + new Random().Next(100000000, 99999999)).Result;
-                    Image image = Image.FromStream(stream);
-                    vcode = GetVCodeByForm(image);
-               
             } while (vcode == "");
             return vcode;
         }
 
         /// <summary>
-        /// 检查验证码有效性
+        /// 获取下单的验证码
         /// </summary>
-        /// <param name="randCode"></param>
         /// <returns></returns>
-        public CheckRandCodeAnsynResponse CheckRandCodeAnsyn(string randCode)
+        public string GetOrderVCode()
         {
-          return   this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync("https://kyfw.12306.cn/otn/passcodeNew/checkRandCodeAnsyn",
-                    new { randCode, rand = "sjrand", randCode_validate = "" }).Result.Content.ReadAsStringAsync().Result.ToJsonObject<CheckRandCodeAnsynResponse>();
+            string vcode = "";
+            do
+            {
+                //https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp& 
+                Stream stream = this.GetHttpClient(ActionUrls.LoginPageUrl).GetStreamAsync("https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp&0." + new Random().Next(10000000, 99999999) + new Random().Next(10000000, 99999999)).Result;
+                Image image = Image.FromStream(stream);
+                vcode = GetVCodeByForm(image);
+
+            } while (vcode == "");
+            return vcode;
         }
+       
         ///// <summary>
         ///// 获取登录随机数
         ///// </summary>
         ///// <returns></returns>
         //public string GetLoginRand()
         //{
-            
+
         //    LoginAysnSuggestInfo loginAysnSuggestInfo = HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest", "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<LoginAysnSuggestInfo>();
         //    if (loginAysnSuggestInfo != null && loginAysnSuggestInfo.RandError == "Y")
         //    {
@@ -119,21 +133,13 @@ namespace LFNet.TrainTicket
         public State CheckState()
         {
             string url = "https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init";
-            string content = HttpRequest.Create(url,"https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie,HttpMethod.GET, "", this.Proxy).GetString();
-            return GetState(content);
-        }
-        /// <summary>
-        /// 根据内容扑捉状态
-        /// </summary>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        private State GetState(string content)
-        {
+            string content =
+                this.GetHttpClient(ActionUrls.QueryPageUrl).GetStringAsync(ActionUrls.InitMy12306PageUrl).Result;// HttpRequest.Create(url, "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, HttpMethod.GET, "", this.Proxy).GetString();
             if (content.Contains("系统维护"))
             {
                 return State.Maintenance;
             }
-            if (content.Contains("loginForm") && content.Contains("loginUser.user_name"))
+            if (content.Contains("loginForm") && content.Contains("loginUserDTO.user_name"))
             {
                 IsLogin = false;
                 return State.UnLogin;
@@ -144,201 +150,181 @@ namespace LFNet.TrainTicket
                 return State.Login;
             }
         }
+        
+
+        public void Login( bool auto=false)
+        {
+            //打开登陆页面
+            var loginPageContent = this.GetHttpClient(ActionUrls.TicketHomePage).GetStringAsync(ActionUrls.LoginPageUrl).Result;
+
+            var keyValues = GetDynamicJsAction(loginPageContent, ActionUrls.LoginPageUrl);
+
+            string vcode = ""; // GetVerifyCode(VCodeType.Login, ref auto);
+            do
+            {
+                vcode = GetLoginVCode();
+            } while (!CheckRandCodeAnsyn(vcode, 0, ""));
+
+            // loginUserDTO.user_name=mydobit&userDTO.password=03265791&randCode=6eed&randCode_validate=&OTU2MzI1=YzRhNGM5ZTdmODI2MjczZg%3D%3D&myversion=undefined
+
+            Dictionary<string, string> nameValues = new Dictionary<string, string>()
+                {
+                    {"loginUserDTO.user_name",this.Username},
+                    {"userDTO.password",this.Password},
+                    {"randCode",vcode},
+                     {"randCode_validate",""},
+                   
+                };
+            foreach (var keyValue in keyValues)
+            {
+                nameValues.Add(keyValue.Key, keyValue.Value);
+            }
+            Thread.Sleep(5000);
+            Response<LoginAysnSuggestResponse> response = this.GetHttpClient(ActionUrls.LoginPageUrl,true)
+                .PostAsync(ActionUrls.LoginAysnSuggestUrl, new FormUrlEncodedContent(nameValues))
+                .Result.Content.ReadAsStringAsync()
+                .Result.ToJsonObject<Response<LoginAysnSuggestResponse>>();
+            if (response.data == null)
+            {
+                throw new Exception(response.messages[0].ToString());
+            }
+            IsLogin = response.data.loginCheck == "Y";
+
+            //查询准备 打开查询页 获取页面动态js结果
+            string leftTicketContent = this.GetHttpClient(ActionUrls.InitMy12306PageUrl)
+                .GetStringAsync(ActionUrls.LeftTicketUrl).Result;
+            Dictionary<string, string> dynamicJsAction = GetDynamicJsAction(leftTicketContent, ActionUrls.LeftTicketUrl);//获取动态js检测结果
+
+            QueryDynamicJsActionResult = dynamicJsAction;
+        }
+
+        public Dictionary<string, string> QueryDynamicJsActionResult { get; set; }
+        /// <summary>
+        /// 检查验证码
+        /// </summary>
+        /// <param name="randCode">验证码</param>
+        /// <param name="randType">0=登陆，1下单</param>
+        /// <param name="token">档randtype=2必须有</param>
+        /// <returns></returns>
+        public bool CheckRandCodeAnsyn(string randCode,int randType,string token)
+        {
+            //randCode=6eed&rand=sjrand&randCode_validate=
+            //randCode=nsph&rand=randp&_json_att=&REPEAT_SUBMIT_TOKEN=c92104171aee0b7323c8e2466a9d3f8c
+            if (randType == 0)
+            {
+                return this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync(ActionUrls.CheckRandCodeAnsynUrl, new
+                {
+                    randCode,
+                    rand = "sjrand",
+                    randCode_validate = ""
+                }.ToUrlEncodedContent())
+                    .Result.Content.ReadAsStringAsync()
+                    .Result.ToJsonObject<Response<CheckRandCodeAnsynResponse>>()
+                    .data.result == "1";
+            }
+            else
+            {
+                return this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync(ActionUrls.CheckRandCodeAnsynUrl, new
+                {
+                    randCode,
+                    rand = "randp",
+                    _json_att="",
+                    REPEAT_SUBMIT_TOKEN=token
+                }.ToUrlEncodedContent())
+                    .Result.Content.ReadAsStringAsync()
+                    .Result.ToJsonObject<Response<CheckRandCodeAnsynResponse>>()
+                    .data.result == "1";
+            }
+
+           
+        }
+        /// <summary>
+        /// 页面动态js检查
+        /// </summary>
+        /// <returns></returns>
+        public  Dictionary<string, string> GetDynamicJsAction(string content, string pageUrl)
+        {
+            Regex jsUrlRegex = new Regex(@"<script src=""/otn/dynamicJs/(.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            
+            string jsurl = new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + jsUrlRegex.Match(content).Groups[1]).ToString();//jsUrlRegex.Replace(content, "$1")).ToString();
+            string jsContent = this.GetHttpClient(pageUrl).GetStringAsync(jsurl).Result;
+            System.Text.RegularExpressions.Regex jsregex = new Regex(@"(function\sbin216(.*?))function\saj()");
+            string js = jsregex.Match(jsContent).Groups[1].ToString();//.Replace(jsContent, "$1");
+            System.Text.RegularExpressions.Regex keyregex = new Regex(@"var\s*?key\s*?=[""']([A-Za-z0-9+/=]*?)[""'];");
+            string key = keyregex.Match(jsContent).Groups[1].ToString(); //Replace(jsContent, "$1");
+            int cnt = new Regex(@"value\+='1';").Matches(jsContent).Count;
+            string value = "";
+            for (int i = 0; i < cnt; i++)
+            {
+                value += "1";
+            }
+            value = Utils.ExcuteJScript(js + ";" + "encode32(bin216(Base32.encrypt('" + value + "', '" + key + "')));");
+
+            Dictionary<string, string> result = new Dictionary<string, string>()
+            {
+                {key,value},
+                {"myversion","undefined"}
+            };
+             Regex postUrlRegex = new Regex(@"/otn/dynamicJs/(.*?)'", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+             string postUrl = new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + postUrlRegex.Match(jsContent).Groups[1]).ToString();
+            HttpResponseMessage httpResponseMessage = this.GetHttpClient(pageUrl, true).PostAsync(postUrl, new StringContent("")).Result;
+            return result;
+           
+        }
 
         
-        /// <summary>
-        /// 登录
-        /// </summary>
-        /// <param name="loginRand"></param>
-        /// <param name="vcode"></param>
-        /// <returns></returns>
-        public bool Login(string loginRand,string vcode)
-        {
-           // loginUserDTO.user_name=mydobit&userDTO.password=03265791&randCode=6eed&randCode_validate=&OTU2MzI1=YzRhNGM5ZTdmODI2MjczZg%3D%3D&myversion=undefined
-
-
-            System.Collections.Specialized.NameValueCollection forms = new NameValueCollection();
-            forms["loginRand"] = loginRand;
-            forms["refundLogin"] = "N";
-            forms["refundFlag"] = "Y";
-            forms["loginUser.user_name"] = Username;
-            forms["nameErrorFocus"] = "";
-            forms["user.password"] = Password;
-            forms["passwordErrorFocus"] = "";
-            forms["randCode"] = vcode;
-            forms["randErrorFocus"] = "";
-            string content =HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=login",
-                                   "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, forms,this.Proxy).
-                    GetString();
-            return IsLogin = !content.Contains("<title>登录</title>");
-
-        }
-
-        public void Login(ref bool auto)
-        {
-            //string url= "https://dynamic.12306.cn/otsweb/loginAction.do?method=init"
-            //var res = HttpRequest.Create(url, referer: "https://dynamic.12306.cn/otsweb/", cookie: Cookie, method: HttpMethod.GET, postStr: "").GetResponse();
-            //https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest
-            //NameValueCollection keyValues = DynamicJsAction();
-            LoginAysnSuggestInfo loginAysnSuggestInfo = HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest", "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<LoginAysnSuggestInfo>();
-            if (loginAysnSuggestInfo != null && loginAysnSuggestInfo.RandError=="Y")
-            {
-                //loginRand=366&refundLogin=N&refundFlag=Y&loginUser.user_name=mydobit&nameErrorFocus=&user.password=&passwordErrorFocus=&randCode=ysqv&randErrorFocus=
-                string vcode = GetVerifyCode(VCodeType.Login, ref auto);
-                System.Collections.Specialized.NameValueCollection forms=new NameValueCollection();
-                forms["loginRand"] = loginAysnSuggestInfo.LoginRand;
-                forms["refundLogin"] = "N";
-                forms["refundFlag"] = "Y";
-                forms["isClick"] = "";
-                forms["form_tk"] = "null";
-                forms["loginUser.user_name"] = Username;
-                forms["nameErrorFocus"] = "";
-                forms["user.password"] = Password;
-                forms["passwordErrorFocus"] = "";
-                forms["randCode"] = vcode;
-                forms["randErrorFocus"] = "";
-                //foreach (string key in keyValues.AllKeys)
-                //{
-                //    forms["key"] = keyValues[key];
-                //}
-                string content = HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=login", "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, forms).GetString();
-                IsLogin = !content.Contains("<title>登录</title>");
-                return;
-            }
-            IsLogin = false;
-        }
-
-        //public NameValueCollection  DynamicJsAction()
-        //{
-        //    string jsContent = JHttpClient.GetString(
-        //        "https://dynamic.12306.cn/otsweb/dynamicJsAction.do?jsversion=5520&method=loginJs", null,
-        //        "https://dynamic.12306.cn/otsweb/loginAction.do?method=init");
-        //    System.Text.RegularExpressions.Regex jsregex=new Regex(@"(function\sbin216(.*?))function\saj()");
-        //    string js = jsregex.Replace(jsContent, "$1");
-        //    System.Text.RegularExpressions.Regex keyregex = new Regex(@"var\s*?key\s*?=[""']([A-Za-z0-9+/=]*?)[""'];");
-        //    string key = keyregex.Replace(jsContent, "$1");
-        //    int cnt = new Regex(@"value\+='0';").Matches(jsContent).Count;
-        //    string value = "";
-        //    for (int i = 0; i < cnt; i++)
-        //    {
-        //        value += "0";
-        //    }
-
-        //    value = Utils.ExcuteJScript(js + ";" + "encode32(bin216(Base32.encrypt('" + value + "', '" + key + "')));");
-
-        //    NameValueCollection nv=new NameValueCollection();
-        //    nv[key] = value;
-        //    nv["myversion"] = "undefined";
-        //    return nv;
-        //}
-
-        /// <summary>
-        /// https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest
-        /// </summary>
-        /// <returns></returns>
-        public LoginAysnSuggestInfo LoginAysnSuggest()
-        {
-            //string url= "https://dynamic.12306.cn/otsweb/loginAction.do?method=init"
-            LoginAysnSuggestInfo loginAysnSuggestInfo = HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest", "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<LoginAysnSuggestInfo>();
-           
-            return loginAysnSuggestInfo;
-        }
-
-        /// <summary>
-        /// https://dynamic.12306.cn/otsweb/loginAction.do?method=login
-        /// </summary>
-        /// <param name="loginAysnSuggestInfo"></param>
-        /// <param name="loginVCode">登陆验证码</param>
-        /// <returns></returns>
-        public bool Login(LoginAysnSuggestInfo loginAysnSuggestInfo,  string loginVCode)
-        {
-            NameValueCollection forms = new NameValueCollection();
-            forms["loginRand"] = loginAysnSuggestInfo.LoginRand;
-            forms["refundLogin"] = "N";
-            forms["refundFlag"] = "Y";
-            forms["loginUser.user_name"] = Username;
-            forms["nameErrorFocus"] = "";
-            forms["user.password"] = Password;
-            forms["passwordErrorFocus"] = "";
-            forms["randCode"] = loginVCode;
-            forms["randErrorFocus"] = "";
-            string content = HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=login", "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, forms).GetString();
-            IsLogin = !content.Contains("<title>登录</title>");
-            return IsLogin;
-        }
 
         /// <summary>
         /// 获取乘客信息
         /// </summary>
         /// <returns></returns>
-        public ResPassengerJsonInfo GetPassengers()
+        public GetPassengerDTOs GetPassengers(string submitToken="")
         {
-            //https://dynamic.12306.cn/otsweb/passengerAction.do?method=queryPagePassenger
-            //https://dynamic.12306.cn/otsweb/passengerAction.do?method=initUsualPassenger
-            //pageIndex=0&pageSize=7&passenger_name=%E8%AF%B7%E8%BE%93%E5%85%A5%E6%B1%89%E5%AD%97%E6%88%96%E6%8B%BC%E9%9F%B3%E9%A6%96%E5%AD%97%E6%AF%8D
-            //pageIndex=0&pageSize=7&passenger_name=请输入汉字或拼音首字母
-            //{"recordCount":2,"rows":[{"address":"","born_date":{"date":10,"day":1,"hours":0,"minutes":0,"month":8,"seconds":0,"time":463593600000,"timezoneOffset":-480,"year":84},"code":"1","country_code":"CN","email":"dobit@163.com","first_letter":"MYDOBIT","isUserSelf":"Y","mobile_no":"15910675179","old_passenger_id_no":"","old_passenger_id_type_code":"","old_passenger_name":"","passenger_flag":"0","passenger_id_no":"362201198409101614","passenger_id_type_code":"1","passenger_id_type_name":"二代身份证","passenger_name":"林利","passenger_type":"1","passenger_type_name":"成人","phone_no":"","postalcode":"","recordCount":"2","sex_code":"M","sex_name":"男","studentInfo":null},{"address":"","born_date":{"date":13,"day":5,"hours":0,"minutes":0,"month":4,"seconds":0,"time":421603200000,"timezoneOffset":-480,"year":83},"code":"2","country_code":"CN","email":"","first_letter":"LY","isUserSelf":"N","mobile_no":"18610037900","old_passenger_id_no":"","old_passenger_id_type_code":"","old_passenger_name":"","passenger_flag":"0","passenger_id_no":"362201198305131667","passenger_id_type_code":"1","passenger_id_type_name":"二代身份证","passenger_name":"林艳","passenger_type":"1","passenger_type_name":"成人","phone_no":"","postalcode":"","recordCount":"2","sex_code":"F","sex_name":"女","studentInfo":null}]}
-            string url = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getpassengerJson";
-            string reffer = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init";
+            HttpContent obj = new StringContent("");
+            if (submitToken != "")
+                obj = new
+                {
+                    _json_att = "",
+                    REPEAT_SUBMIT_TOKEN = submitToken
+                }.ToUrlEncodedContent();
+            Response<GetPassengerDTOs> response = this.GetHttpClient(ActionUrls.QueryPageUrl)
+                .PostAsync("https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs",obj).Result.Content.ReadAsStringAsync().Result.ToJsonObject<Response<GetPassengerDTOs>>();
+            return response.data;//.normal_passengers; //乘客信息
 
-            //{"passengerJson":[{"first_letter":"XIAOYUAN800208","isUserSelf":"","mobile_no":"13556718373","old_passenger_id_no":"","old_passenger_id_type_code":"","old_passenger_name":"","passenger_flag":"0","passenger_id_no":"430523198910104211","passenger_id_type_code":"1","passenger_id_type_name":"","passenger_name":"袁凌云","passenger_type":"1","passenger_type_name":"","recordCount":"11"},{"first_letter":"RB","isUserSelf":"","mobile_no":"13510549626","old_passenger_id_no":"","old_passenger_id_type_code":"","old_passenger_name":"","passenger_flag":"0","passenger_id_no":"500242198801275573","passenger_id_type_code":"1","passenger_id_type_name":"","passenger_name":"冉波","passenger_type":"1","passenger_type_name":"","recordCount":"11"}]}
-            return HttpRequest.Create(url, reffer, Cookie, HttpMethod.GET, "").GetJsonObject<ResPassengerJsonInfo>();
-           
         }
+
+
+        public bool CheckUser()
+        {
+          var response= this.GetHttpClient(ActionUrls.QueryPageUrl)
+                .PostAsync("https://kyfw.12306.cn/otn/login/checkUse", new StringContent(""))
+                .Result.Content.ReadAsStringAsync()
+                .Result.ToJsonObject<Response<CheckUserResponse>>();
+            return response.data.flag;
+        }
+
         /// <summary>
         /// 查询列车信息
         /// </summary>
         /// <returns></returns>
-        public List<TrainItemInfo> QueryTrainInfos(List<TrainItemInfo> oldList)
+        public List<TrainItemInfo> QueryTrainInfos(List<TrainItemInfo> oldList,int type=0 )
         {
-            List<TrainItemInfo> list=new List<TrainItemInfo>();
-            if(IsLogin)
-            {
-                //var  res =
-                //    HttpRequest.Create("https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init",
-                //                       "https://dynamic.12306.cn/otsweb/loginAction.do?method=login", Cookie,
-                //                       HttpMethod.GET,
-                //                       "").GetResponse();
-                //Todo://
-                //&orderRequest.train_date=2012-10-10&orderRequest.from_station_telecode=BJP
-                //&orderRequest.to_station_telecode=NCG&orderRequest.train_no=
-                //&trainPassType=QB&trainClass=QB%23D%23Z%23T%23K%23QT%23&includeStudent=00&seatTypeAndNum=&orderRequest.start_time_str=00%3A00--24%3A00
-                StringBuilder sb = new StringBuilder("https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=queryLeftTicket");
-                sb.AppendFormat("&orderRequest.train_date={0}",BuyTicketConfig.Instance.OrderRequest.TrainDate.ToString("yyyy-MM-dd"));
-                sb.AppendFormat("&orderRequest.from_station_telecode={0}", BuyTicketConfig.Instance.OrderRequest.FromStationTelecode);
-                sb.AppendFormat("&orderRequest.to_station_telecode={0}", BuyTicketConfig.Instance.OrderRequest.ToStationTelecode);
-                sb.AppendFormat("&orderRequest.train_no={0}", BuyTicketConfig.Instance.OrderRequest.TrainNo);
-                sb.AppendFormat("&trainPassType={0}",Common.HtmlUtil.UrlEncode(BuyTicketConfig.Instance.OrderRequest.TrainPassType));
-                sb.AppendFormat("&trainClass={0}", Common.HtmlUtil.UrlEncode(BuyTicketConfig.Instance.OrderRequest.TrainClass));
-                sb.AppendFormat("&includeStudent=00{0}", BuyTicketConfig.Instance.OrderRequest.IncludeStudent);
-                sb.AppendFormat("&seatTypeAndNum=&orderRequest.start_time_str={0}", Common.HtmlUtil.UrlEncode(BuyTicketConfig.Instance.OrderRequest.StartTimeStr));
-                string url = sb.ToString();
-#if !DEBUG
-                HttpRequest httpRequest = HttpRequest.Create(url,
-                                                             "https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init",
-                                                             Cookie, HttpMethod.GET,
-                                                             new Random().NextDouble().ToString());
-#else
-                 HttpRequest httpRequest = HttpRequest.Create(url,
-                                                             "https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init",
-                                                             Cookie, HttpMethod.POST,
-                                                             new Random().NextDouble().ToString());
-#endif
-                httpRequest.ContentType = "";//清空请求
-                string content = httpRequest.GetString();
+            List<TrainItemInfo> list = new List<TrainItemInfo>();
+           
+               //GET https://kyfw.12306.cn/otn/leftTicket/queryT?leftTicketDTO.train_date=2015-02-19&leftTicketDTO.from_station=BJP&leftTicketDTO.to_station=NCG&purpose_codes=ADULT HTTP/1.1
+            string purpose_codes = type == 0 ? "ADULT" : "STUDENT";
+            string url =string.Format(
+                    "https://kyfw.12306.cn/otn/leftTicket/queryT?leftTicketDTO.train_date={0}&leftTicketDTO.from_station={1}&leftTicketDTO.to_station={2}&purpose_codes={3}"
+                    , BuyTicketConfig.Instance.OrderRequest.TrainDate.ToString("yyyy-MM-dd"), BuyTicketConfig.Instance.OrderRequest.FromStationTelecode,
+                    BuyTicketConfig.Instance.OrderRequest.ToStationTelecode, purpose_codes);
 
-                /*content===>
-                 * 0,
-                 * <span id='id_24000014530R' class='base_txtdiv' onmouseover=javascript:onStopHover('24000014530R#BXP#NCG') onmouseout='onStopOut()'>1453</span>,
-                 * <img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;北京西&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;12:09,
-                 * <img src='/otsweb/images/tips/last.gif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;06:09,
-                 * 18:00,4#
-                 * --,--,--,--,--,<font color='#008800'>有</font>,<font color='#008800'>有</font>,--,<font color='#008800'>有</font>,<font color='#008800'>有</font>,--,
-                 * <input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('1453#18:00#12:09#24000014530R#BXP#NCG#06:09#北京西#南昌#1*****32464*****00221*****03383*****0189#901E8F9F74DD1531E4E4F263D7454E2332EB2A012A1034011F851E79') value='预订'></input>\n1,<span id='id_240000T14500' class='base_txtdiv' onmouseover=javascript:onStopHover('240000T14500#BJP#NCG') onmouseout='onStopOut()'>T145</span>,<img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;北京&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;12:09,<img src='/otsweb/images/tips/last.gif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;10:37,22:28,--,--,--,--,--,11,9,--,<font color='darkgray'>无</font>,<font color='#008800'>有</font>,--,<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('T145#22:28#12:09#240000T14500#BJP#NCG#10:37#北京#南昌#1*****31624*****00111*****00003*****0009#10D427205AA48B5464D234D8C5397FB6806783F4ED6AD1C939C5424C') value='预订'></input>\n2,<span id='id_240000T1670I' class='base_txtdiv' onmouseover=javascript:onStopHover('240000T1670I#BXP#NCG') onmouseout='onStopOut()'>T167</span>,<img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;北京西&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;14:54,<img src='/otsweb/images/tips/last.gif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;08:20,17:26,--,--,--,--,--,9,5,--,<font color='darkgray'>无</font>,<font color='#008800'>有</font>,--,<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('T167#17:26#14:54#240000T1670I#BXP#NCG#08:20#北京西#南昌#1*****30624*****00091*****00003*****0005#8EC58665C1266269D823F20328FBB46578FE22BE9C12846B31502520') value='预订'></input>\n3,<span id='id_240000K5710A' class='base_txtdiv' onmouseover=javascript:onStopHover('240000K5710A#BXP#NCG') onmouseout='onStopOut()'>K571</span>,<img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;北京西&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;16:55,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;09:44,16:49,--,--,--,--,--,4,<font color='#008800'>有</font>,--,<font color='#008800'>有</font>,<font color='#008800'>有</font>,--,<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('K571#16:49#16:55#240000K5710A#BXP#NCG#09:44#北京西#南昌#1*****33464*****00041*****05323*****0041#13EDB01BC9D0162C4CE81DC3595ECDF7C01C0DB57A61413C39419712') value='预订'></input>\n4,<span id='id_240000Z13305' class='base_txtdiv' onmouseover=javascript:onStopHover('240000Z13305#BXP#NCG') onmouseout='onStopOut()'>Z133</span>,<img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;北京西&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;19:45,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;07:14,11:29,--,--,--,--,14,<font color='#008800'>有</font>,<font color='#008800'>有</font>,--,3,<font color='#008800'>有</font>,--,<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('Z133#11:29#19:45#240000Z13305#BXP#NCG#07:14#北京西#南昌#1*****31214*****00551*****00036*****00143*****0086#E3AA59C14B426728B9865034582D45FCD0F7B7DA2D5B5ABC115CEF74') value='预订'></input>\n5,<span id='id_2400000Z6506' class='base_txtdiv' onmouseover=javascript:onStopHover('2400000Z6506#BXP#NCG') onmouseout='onStopOut()'>Z65</span>,<img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;北京西&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;20:00,<img src='/otsweb/images/tips/last.gif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;07:22,11:22,--,--,--,--,14,<font color='#008800'>有</font>,<font color='#008800'>有</font>,--,<font color='darkgray'>无</font>,<font color='darkgray'>无</font>,--,<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('Z65#11:22#20:00#2400000Z6506#BXP#NCG#07:22#北京西#南昌#1*****30004*****01261*****00006*****00143*****0040#147C867FC1A296D487C9C628E6890170A504A53410C2688FA5958DF0') value='预订'></input>\n6,<span id='id_2400000Z6706' class='base_txtdiv' onmouseover=javascript:onStopHover('2400000Z6706#BXP#NCG') onmouseout='onStopOut()'>Z67</span>,<img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;北京西&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;20:06,<img src='/otsweb/images/tips/last.gif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;07:32,11:26,--,--,--,--,8,<font color='#008800'>有</font>,<font color='#008800'>有</font>,--,1,<font color='#008800'>有</font>,--,<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('Z67#11:26#20:06#2400000Z6706#BXP#NCG#07:32#北京西#南昌#1*****31594*****00361*****00016*****00083*****0100#0D4F337C3D339CA418DBBED1368663DE011CB59EA828E193D7B43707') value='预订'></input>\n7,<span id='id_240000T1070D' class='base_txtdiv' onmouseover=javascript:onStopHover('240000T1070D#BXP#NCG') onmouseout='onStopOut()'>T107</span>,<img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;北京西&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;20:12,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;09:31,13:19,--,--,--,--,--,<font color='darkgray'>无</font>,<font color='darkgray'>无</font>,--,<font color='darkgray'>无</font>,<font color='#008800'>有</font>,--,<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('T107#13:19#20:12#240000T1070D#BXP#NCG#09:31#北京西#南昌#1*****31264*****00001*****00003*****0000#5296112E65BC5E9064A23C5CFE49C14912D395D7A03947C27FA34E90') value='预订'></input>\n8,<span id='id_240000K1050Q' class='base_txtdiv' onmouseover=javascript:onStopHover('240000K1050Q#BXP#NCG') onmouseout='onStopOut()'>K105</span>,<img src='/otsweb/images/tips/first.gif'>&nbsp;&nbsp;&nbsp;&nbsp;北京西&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;23:45,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;南昌&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;15:48,16:03,--,--,--,--,--,8,1,--,5,<font color='#008800'>有</font>,--,<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('K105#16:03#23:45#240000K1050Q#BXP#NCG#15:48#北京西#南昌#1*****31734*****00081*****00053*****0001#18B07C0C004B7BEF04F979E063EFDAF3401764D0968D81C7092E56B7') value='预订'></input>
-                 */
-                if (content.Contains("系统维护中")) throw new Exception("系统维护");
-                return ToTrainItemInfos(content, oldList);
-            }
+
+            this.GetHttpClient(ActionUrls.QueryPageUrl).GetStringAsync(url.Replace("queryT", "log"));
+            var response =this.GetHttpClient(ActionUrls.QueryPageUrl).GetStringAsync(url).Result.ToJsonObject<Response<QueryResponse>>();
+
+               
+                return ToTrainItemInfos(response.data, oldList);
+          
             return list;
         }
 
@@ -346,7 +332,7 @@ namespace LFNet.TrainTicket
         /// 下订单，但不返回订单编号
         /// </summary>
         /// <returns>无错误时返回空，其它返回错误</returns>
-        public string OrderTicket(TrainItemInfo trainItemInfo,Passenger[] passengers,SeatType seatType,ref bool stop, bool force=false,RichTextBox rtbLog=null)
+        public string OrderTicket(TrainItemInfo trainItemInfo, Passenger[] passengers, SeatType seatType, ref bool stop, bool force = false, RichTextBox rtbLog = null)
         {
             /*POST https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=submutOrderRequest HTTP/1.1
              * Referer: https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init
@@ -357,7 +343,7 @@ namespace LFNet.TrainTicket
              * &start_time_str=00%3A00--24%3A00&lishi=11%3A29&train_start_time=19%3A45&trainno4=240000Z13305
              * &arrive_time=07%3A14&from_station_name=%E5%8C%97%E4%BA%AC%E8%A5%BF&to_station_name=%E5%8D%97%E6%98%8C&ypInfoDetail=1*****31254*****00241*****00006*****00113*****0111&mmStr=7D1B712CD355990896422EECCC4C11205C7DFD31C26962626B630FEE
              */
-            NameValueCollection forms=new NameValueCollection();
+            NameValueCollection forms = new NameValueCollection();
             forms["station_train_code"] = trainItemInfo.TrainNo;
             forms["train_date"] = BuyTicketConfig.Instance.OrderRequest.TrainDate.ToString("yyyy-MM-dd");
             forms["seattype_num"] = "";
@@ -373,7 +359,7 @@ namespace LFNet.TrainTicket
             forms["train_class_arr"] = BuyTicketConfig.Instance.OrderRequest.TrainClass;
             forms["start_time_str"] = BuyTicketConfig.Instance.OrderRequest.StartTimeStr;
             forms["lishi"] = trainItemInfo.lishi;
-            forms["train_start_time"] =trainItemInfo.TrainStartTime;
+            forms["train_start_time"] = trainItemInfo.TrainStartTime;
             forms["trainno4"] = trainItemInfo.TrainNo4;
             forms["arrive_time"] = trainItemInfo.ArriveTime;
             forms["from_station_name"] = trainItemInfo.FromStationName;
@@ -392,14 +378,14 @@ namespace LFNet.TrainTicket
                 return "下单失败:未能获取真实的余票串信息";
             }
 
-            ConfirmRequest:
+        ConfirmRequest:
 
             forms = new NameValueCollection();
             forms["org.apache.struts.taglib.html.TOKEN"] = htmlForm["org.apache.struts.taglib.html.TOKEN"];
             forms["leftTicketStr"] = htmlForm["leftTicketStr"];
             foreach (string key in htmlForm.Keys)
             {
-                if(key.StartsWith("orderRequest"))
+                if (key.StartsWith("orderRequest"))
                 {
                     forms[key] = htmlForm[key];
                 }
@@ -441,10 +427,10 @@ namespace LFNet.TrainTicket
                 {
                     postStr += "&passengerTickets=" +
                                Common.HtmlUtil.UrlEncode(string.Format("{0},{1},{2},{3},{4},{5},{6},Y",
-                                                                       //passenger.SeatType.ToSeatTypeValue(),
+                        //passenger.SeatType.ToSeatTypeValue(),
                                                                        seatType.ToSeatTypeValue(),
-                                                                       (int) passenger.SeatDetailType,
-                                                                       (int) passenger.TicketType, passenger.Name,
+                                                                       (int)passenger.SeatDetailType,
+                                                                       (int)passenger.TicketType, passenger.Name,
                                                                        passenger.CardType.ToCardTypeValue(),
                                                                        passenger.CardNo, passenger.MobileNo));
                     postStr += "&oldPassengers=" +
@@ -456,8 +442,8 @@ namespace LFNet.TrainTicket
 
             string checkOrderInfoUrl = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=checkOrderInfo&rand=" + vcode;
 
-            CheckOrderInfo:
-            if(stop)
+        CheckOrderInfo:
+            if (stop)
             {
                 return "用户终止执行";
             }
@@ -468,66 +454,67 @@ namespace LFNet.TrainTicket
                 goto ConfirmRequest;
             }
             //https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getQueueCount&train_date=2013-02-04&train_no=24000000T50E&station=T5&seat=1&from=BXP&to=NNZ&ticket=1027353027407675000010273500003048050000
-            string  getQueueCountUrl=@"https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getQueueCount&train_date="
-            +forms["orderRequest.train_date"]
-            +"&train_no="+forms["orderRequest.train_no"]
-            +"&station="+forms["orderRequest.station_train_code"]+
-            "&seat="+seatType.ToSeatTypeValue()+
-            "&from="+forms["orderRequest.from_station_telecode"]+
+            string getQueueCountUrl = @"https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getQueueCount&train_date="
+            + forms["orderRequest.train_date"]
+            + "&train_no=" + forms["orderRequest.train_no"]
+            + "&station=" + forms["orderRequest.station_train_code"] +
+            "&seat=" + seatType.ToSeatTypeValue() +
+            "&from=" + forms["orderRequest.from_station_telecode"] +
             "&to=" + forms["orderRequest.to_station_telecode"] +
-            "&ticket="+ forms["leftTicketStr"];
-          ResYpInfo resYpInfo =  HttpRequest.Create(getQueueCountUrl, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<ResYpInfo>();;
-           // {"countT":0,"count":355,"ticket":"1*****30504*****00001*****00003*****0000","op_1":true,"op_2":false}
+            "&ticket=" + forms["leftTicketStr"];
+            ResYpInfo resYpInfo = HttpRequest.Create(getQueueCountUrl, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<ResYpInfo>(); ;
+            // {"countT":0,"count":355,"ticket":"1*****30504*****00001*****00003*****0000","op_1":true,"op_2":false}
 
             int seatNum = Utils.GetRealSeatNumber(resYpInfo.Ticket, seatType);
-            int  wuzuo =0;
-            if(seatType==SeatType.硬座)
-             wuzuo=Utils.GetRealSeatNumber(resYpInfo.Ticket, SeatType.无座);
-             if (rtbLog!=null)
-              {
-                  if (rtbLog.InvokeRequired)
-                  {
-                      rtbLog.Invoke(new Action(()=>
-                          {
-                              rtbLog.Text += string.Format("===>{0},{1}人排队,余票 {2} 张 {3}\r\n", seatType, resYpInfo.CountT, seatNum, wuzuo == 0 ? "" : ",无座 " + wuzuo + " 张");
-                              rtbLog.SelectionStart = rtbLog.TextLength;
-                              rtbLog.ScrollToCaret();
-                          }));
-                      
-                  }
-                  else
-                  {
-                      rtbLog.Text += string.Format("===>{0},{1}人排队,余票 {2} 张 {3}\r\n", seatType, resYpInfo.CountT, seatNum, wuzuo == 0 ? "" : ",无座 " + wuzuo + " 张");
-                      rtbLog.SelectionStart = rtbLog.TextLength;
-                      rtbLog.ScrollToCaret();
-                  }
-              }
-          if (force &&  seatNum< passengers.Length)
-          {
-              if(wuzuo==0)
-              {
-                  System.Threading.Thread.Sleep(1000);
-                  goto CheckOrderInfo;
-              }else
-              {
-                  if(wuzuo <passengers.Length)
-                  {
-                      System.Threading.Thread.Sleep(1000);
-                      goto CheckOrderInfo;
-                  }
-              }
-              
-          }
+            int wuzuo = 0;
+            if (seatType == SeatType.硬座)
+                wuzuo = Utils.GetRealSeatNumber(resYpInfo.Ticket, SeatType.无座);
+            if (rtbLog != null)
+            {
+                if (rtbLog.InvokeRequired)
+                {
+                    rtbLog.Invoke(new Action(() =>
+                        {
+                            rtbLog.Text += string.Format("===>{0},{1}人排队,余票 {2} 张 {3}\r\n", seatType, resYpInfo.CountT, seatNum, wuzuo == 0 ? "" : ",无座 " + wuzuo + " 张");
+                            rtbLog.SelectionStart = rtbLog.TextLength;
+                            rtbLog.ScrollToCaret();
+                        }));
+
+                }
+                else
+                {
+                    rtbLog.Text += string.Format("===>{0},{1}人排队,余票 {2} 张 {3}\r\n", seatType, resYpInfo.CountT, seatNum, wuzuo == 0 ? "" : ",无座 " + wuzuo + " 张");
+                    rtbLog.SelectionStart = rtbLog.TextLength;
+                    rtbLog.ScrollToCaret();
+                }
+            }
+            if (force && seatNum < passengers.Length)
+            {
+                if (wuzuo == 0)
+                {
+                    System.Threading.Thread.Sleep(1000);
+                    goto CheckOrderInfo;
+                }
+                else
+                {
+                    if (wuzuo < passengers.Length)
+                    {
+                        System.Threading.Thread.Sleep(1000);
+                        goto CheckOrderInfo;
+                    }
+                }
+
+            }
             string confirmSingleForQueueOrderUrl = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=confirmSingleForQueueOrder ";
-           string resStateContent=  HttpRequest.Create(confirmSingleForQueueOrderUrl, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.POST, postStr).GetString();
-           
-            if(resStateContent.Contains("验证码"))
+            string resStateContent = HttpRequest.Create(confirmSingleForQueueOrderUrl, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.POST, postStr).GetString();
+
+            if (resStateContent.Contains("验证码"))
             {
                 goto ConfirmRequest;
             }
             ResState resState = resStateContent.ToJsonObject<ResState>();
-            
-            if(resState==null)
+
+            if (resState == null)
             {
                 Common.LogUtil.Log(resStateContent);
                 return "下单失败:确认订单时，系统返回的内容不正确," + resStateContent;
@@ -541,7 +528,7 @@ namespace LFNet.TrainTicket
                 else
                 {
                     Common.LogUtil.Log(resStateContent);
-                   return "请求异常,响应状态为：" + resState.ErrMsg;
+                    return "请求异常,响应状态为：" + resState.ErrMsg;
                 }
             }
 
@@ -555,93 +542,96 @@ namespace LFNet.TrainTicket
         /// <param name="passengers"></param>
         /// <param name="seatType"></param>
         /// <returns>得到页面的表单信息</returns>
-        public NameValueCollection SubmitOrderRequest(TrainItemInfo trainItemInfo, Passenger[] passengers, SeatType seatType)
+        public Dictionary<string, string> SubmitOrderRequest(TrainItemInfo trainItemInfo, Passenger[] passengers, SeatType seatType)
         {
             /*POST https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=submutOrderRequest HTTP/1.1
             * Referer: https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init
             * 
-            * station_train_code=Z133&train_date=2012-10-12&seattype_num=&from_station_telecode=BXP&to_station_telecode=NCG&include_student=00
-            * &from_station_telecode_name=%E5%8C%97%E4%BA%AC&to_station_telecode_name=%E5%8D%97%E6%98%8C
-            * &round_train_date=2012-10-11&round_start_time_str=00%3A00--24%3A00&single_round_type=1&train_pass_type=QB&train_class_arr=QB%23D%23Z%23T%23K%23QT%23
-            * &start_time_str=00%3A00--24%3A00&lishi=11%3A29&train_start_time=19%3A45&trainno4=240000Z13305
-            * &arrive_time=07%3A14&from_station_name=%E5%8C%97%E4%BA%AC%E8%A5%BF&to_station_name=%E5%8D%97%E6%98%8C&ypInfoDetail=1*****31254*****00241*****00006*****00113*****0111&mmStr=7D1B712CD355990896422EECCC4C11205C7DFD31C26962626B630FEE
             */
-            NameValueCollection forms = new NameValueCollection();
-            forms["station_train_code"] = trainItemInfo.TrainNo;
-            forms["train_date"] = BuyTicketConfig.Instance.OrderRequest.TrainDate.ToString("yyyy-MM-dd");
-            forms["seattype_num"] = "";
-            forms["from_station_telecode"] = trainItemInfo.FromStationTelecode;
-            forms["to_station_telecode"] = trainItemInfo.ToStationTelecode;
-            forms["include_student"] = "00";
-            forms["from_station_telecode_name"] = BuyTicketConfig.Instance.OrderRequest.FromStationTelecodeName;
-            forms["to_station_telecode_name"] = BuyTicketConfig.Instance.OrderRequest.ToStationTelecodeName;
-            forms["round_train_date"] = System.DateTime.Today.ToString("yyyy-MM-dd");
-            forms["round_start_time_str"] = BuyTicketConfig.Instance.OrderRequest.StartTimeStr;
-            forms["single_round_type"] = "1";
-            forms["train_pass_type"] = BuyTicketConfig.Instance.OrderRequest.TrainPassType;
-            forms["train_class_arr"] = BuyTicketConfig.Instance.OrderRequest.TrainClass;
-            forms["start_time_str"] = BuyTicketConfig.Instance.OrderRequest.StartTimeStr;
-            forms["lishi"] = trainItemInfo.lishi;
-            forms["train_start_time"] = trainItemInfo.TrainStartTime;
-            forms["trainno4"] = trainItemInfo.TrainNo4;
-            forms["arrive_time"] = trainItemInfo.ArriveTime;
-            forms["from_station_name"] = trainItemInfo.FromStationName;
-            forms["to_station_name"] = trainItemInfo.ToStationName;
-            forms["from_station_no"] = trainItemInfo.FromStationNo;
-            forms["to_station_no"] = trainItemInfo.ToStationNo;
-            forms["ypInfoDetail"] = trainItemInfo.YpInfoDetail;
-            forms["mmStr"] = trainItemInfo.MmStr;
-            forms["locationCode"] = trainItemInfo.LocationCode;
-            string content = HttpRequest.Create("https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=submutOrderRequest", "https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init", Cookie, forms).GetString();
-            NameValueCollection htmlForm = Utils.GetForms(content);
-            //trainItemInfo.YpInfoDetailReal = htmlForm["leftTicketStr"]; //用于实时查询余票信息
-            //if (string.IsNullOrEmpty(trainItemInfo.YpInfoDetailReal))
-            //{
-            //    Common.LogUtil.Log(content);
-            //    return "下单失败:未能获取真实的余票串信息";
-            //}
-            return htmlForm;
-        }
 
-
-        /// <summary>
-        /// 获取登录时的验证码,自动重试当错误出现3次以上抛异常
-        /// </summary>
-        /// <returns>返回BREAK 表示用户终止执行 否则为验证码值</returns>
-        public string GetVerifyCode(VCodeType vCodeType,ref bool auto)
-        {
-            //0.9789911571440171
-            Random random = new Random(DateTime.Now.Millisecond);
-
-            string url = "https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=login&rand=sjrand&" + random.NextDouble(); ;
-            string referUrl = "https://dynamic.12306.cn/otsweb/loginAction.do?method=init";
-            if(vCodeType==VCodeType.SubmitOrder)
+            var config=ConfigFileManager.GetConfig<BuyTicketConfig>();
+            string backTrainDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(-1).ToString("yyyy-MM-dd");
+            Dictionary<string,string> newforms=new Dictionary<string, string>()
             {
-                url = "https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=passenger&rand=randp&" + random.NextDouble(); ;
-                referUrl = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init";
+                
+{"secretStr",trainItemInfo.MmStr	},
+{"train_date",	config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")},
+{"back_train_date",backTrainDate},
+{"tour_flag","dc"},
+{"purpose_codes","ADULT"},
+{"query_from_station_name",Global.GetStations().First(p=>p.Code==config.OrderRequest.FromStationTelecodeName).Name},
+{"query_to_station_name",Global.GetStations().First(p=>p.Code==config.OrderRequest.ToStationTelecode).Name},
+{"undefined",""},
+            };
+            foreach (var keyValue in this.QueryDynamicJsActionResult)
+            {
+                newforms.Add(keyValue.Key, keyValue.Value);
             }
-            string vcode = "";
-            do
+            var response = this.GetHttpClient(ActionUrls.QueryPageUrl, true)
+                .PostAsync("https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest",
+                    new FormUrlEncodedContent(newforms))
+                .Result.Content.ReadAsStringAsync()
+                .Result.ToJsonObject<Response<string>>();
+            if (!response.status)//说明提交成功
             {
+                throw  new Exception(response.messages[0].ToString()); //抛出异常
+            }
 
-                Stream stream =HttpRequest.Create(url,referUrl, Cookie,HttpMethod.GET, "", Proxy).GetStream();
-                Image image = Image.FromStream(stream);
-               
-                    vcode = new Cracker().Read(new Bitmap(image));
-                    if (vcode.Length < 4)
-                    {
-                        if (auto)
-                            vcode = "";
-                        else
-                            vcode = GetVCodeByForm(image);
-                    }
-               
-                //vcode = GetVCodeByForm(image);
-                if (vcode == "BREAK")
-                    return "用户终止";
-            } while (vcode == "");
-            return vcode;
+            //转到订单页面
+            string content = this.GetHttpClient(ActionUrls.QueryPageUrl).PostAsync("https://kyfw.12306.cn/otn/confirmPassenger/initDc",new UrlEncodedContent(new{_json_att=""})).Result.Content.ReadAsStringAsync().Result;
+
+            Dictionary<string, string> dynamicJsAction = GetDynamicJsAction(content, "https://kyfw.12306.cn/otn/confirmPassenger/initDc");
+            Regex regex = new Regex(@"[A-z0-9]{32,}");
+            var matches = regex.Matches(content);
+            string token = matches[0].Groups[1].ToString();
+            string key_check_isChange = matches[1].Groups[1].ToString();
+            string leftTicketStr = matches[2].Groups[1].ToString();
+          dynamicJsAction.Add("REPEAT_SUBMIT_TOKEN",token);
+          dynamicJsAction.Add("key_check_isChange", key_check_isChange);
+          dynamicJsAction.Add("leftTicketStr", leftTicketStr);
+          //调用获取用户信息
+            GetPassengers(token); 
+          return dynamicJsAction;
         }
+
+
+        ///// <summary>
+        ///// 获取登录时的验证码,自动重试当错误出现3次以上抛异常
+        ///// </summary>
+        ///// <returns>返回BREAK 表示用户终止执行 否则为验证码值</returns>
+        //public string GetVerifyCode(VCodeType vCodeType, ref bool auto)
+        //{
+        //    //0.9789911571440171
+        //    Random random = new Random(DateTime.Now.Millisecond);
+
+        //    string url = "https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=login&rand=sjrand&" + random.NextDouble(); ;
+        //    string referUrl = "https://dynamic.12306.cn/otsweb/loginAction.do?method=init";
+        //    if (vCodeType == VCodeType.SubmitOrder)
+        //    {
+        //        url = "https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=passenger&rand=randp&" + random.NextDouble(); ;
+        //        referUrl = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init";
+        //    }
+        //    string vcode = "";
+        //    do
+        //    {
+        //        Stream stream = HttpRequest.Create(url, referUrl, Cookie, HttpMethod.GET, "", Proxy).GetStream();
+        //        Image image = Image.FromStream(stream);
+
+        //        vcode = new Cracker().Read(new Bitmap(image));
+        //        if (vcode.Length < 4)
+        //        {
+        //            if (auto)
+        //                vcode = "";
+        //            else
+        //                vcode = GetVCodeByForm(image);
+        //        }
+
+        //        //vcode = GetVCodeByForm(image);
+        //        if (vcode == "BREAK")
+        //            return "用户终止";
+        //    } while (vcode == "");
+        //    return vcode;
+        //}
 
         /// <summary>
         /// 验证码
@@ -687,7 +677,7 @@ namespace LFNet.TrainTicket
         /// <param name="forms"></param>
         /// <param name="seatType"></param>
         /// <returns></returns>
-        public ResYpInfo GetQueueCount(NameValueCollection forms,SeatType seatType)
+        public ResYpInfo GetQueueCount(NameValueCollection forms, SeatType seatType)
         {
             //https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getQueueCount&train_date=2013-02-04&train_no=24000000T50E&station=T5&seat=1&from=BXP&to=NNZ&ticket=1027353027407675000010273500003048050000
             string getQueueCountUrl = @"https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getQueueCount&train_date="
@@ -698,7 +688,7 @@ namespace LFNet.TrainTicket
             "&from=" + forms["orderRequest.from_station_telecode"] +
             "&to=" + forms["orderRequest.to_station_telecode"] +
             "&ticket=" + forms["leftTicketStr"];
-            ResYpInfo resYpInfo = HttpRequest.Create(getQueueCountUrl+"&t="+DateTime.Now.Ticks, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<ResYpInfo>(); ;
+            ResYpInfo resYpInfo = HttpRequest.Create(getQueueCountUrl + "&t=" + DateTime.Now.Ticks, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<ResYpInfo>(); ;
             // {"countT":0,"count":355,"ticket":"1*****30504*****00001*****00003*****0000","op_1":true,"op_2":false}
             return resYpInfo;
             //int seatNum = Utils.GetRealSeatNumber(resYpInfo.Ticket, seatType);
@@ -771,18 +761,18 @@ namespace LFNet.TrainTicket
             //    }
             //}
         }
-        
+
         /// <summary>
         /// 等待订单完成
         /// </summary>
         /// <returns></returns>
         public WaitResponse GetWaitResponse(out string rspContent)
         {
-            string waitUrl ="https://dynamic.12306.cn/otsweb/order/myOrderAction.do?method=getOrderWaitTime&tourFlag=dc";
-            string  waitResponseContent = HttpRequest.Create(waitUrl, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.GET, "").GetString();
+            string waitUrl = "https://dynamic.12306.cn/otsweb/order/myOrderAction.do?method=getOrderWaitTime&tourFlag=dc";
+            string waitResponseContent = HttpRequest.Create(waitUrl, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.GET, "").GetString();
             rspContent = waitResponseContent;
             return waitResponseContent.ToJsonObject<WaitResponse>();
-           
+
 
         }
 
@@ -794,14 +784,14 @@ namespace LFNet.TrainTicket
         /// <param name="trainItemInfo"></param>
         /// <param name="seatType"></param>
         /// <returns></returns>
-        public ResYpInfo Query(TrainItemInfo trainItemInfo,string seatType )
+        public ResYpInfo Query(TrainItemInfo trainItemInfo, string seatType)
         {
-            if(string.IsNullOrEmpty(trainItemInfo.YpInfoDetailReal)) return null;
+            if (string.IsNullOrEmpty(trainItemInfo.YpInfoDetailReal)) return null;
 
             //https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getQueueCount&train_date=2012-10-12&station=Z133&seat=3&from=BXP&to=NCG&ticket=10175031254048600024101750000060895000113030800111
-           
-             string queryUrl =string.Format("https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getQueueCount&train_date={0}&station={1}&seat={2}&from={3}&to={4}&ticket={5}",
-                BuyTicketConfig.Instance.OrderRequest.TrainDate.ToString("yyyy-MM-dd"),trainItemInfo.TrainNo,seatType,trainItemInfo.FromStationTelecode,trainItemInfo.ToStationTelecode,trainItemInfo.YpInfoDetailReal);
+
+            string queryUrl = string.Format("https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=getQueueCount&train_date={0}&station={1}&seat={2}&from={3}&to={4}&ticket={5}",
+               BuyTicketConfig.Instance.OrderRequest.TrainDate.ToString("yyyy-MM-dd"), trainItemInfo.TrainNo, seatType, trainItemInfo.FromStationTelecode, trainItemInfo.ToStationTelecode, trainItemInfo.YpInfoDetailReal);
             ResYpInfo resYpInfo = HttpRequest.Create(queryUrl, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<ResYpInfo>();
             return resYpInfo;
         }
@@ -812,77 +802,65 @@ namespace LFNet.TrainTicket
         public static string GetVCodeByForm(Image image)
         {
             string ret;
-           VCodeForm vCodeForm=new VCodeForm(image);
-           if (vCodeForm.ShowDialog() == DialogResult.OK)
-           {
-               ret= vCodeForm.Value.Trim();
-           }
-           else
-               ret= "BREAK";
+            VCodeForm vCodeForm = new VCodeForm(image);
+            if (vCodeForm.ShowDialog() == DialogResult.OK)
+            {
+                ret = vCodeForm.Value.Trim();
+            }
+            else
+                ret = "BREAK";
             vCodeForm.Dispose();
             System.GC.ReRegisterForFinalize(vCodeForm);
             return ret;
         }
 
-        public static List<TrainItemInfo> ToTrainItemInfos(string content, List<TrainItemInfo> oldList)
+        public static List<TrainItemInfo> ToTrainItemInfos(QueryResponse response, List<TrainItemInfo> oldList)
         {
-            string[] records = content.Split(new string[]{"\\n"},StringSplitOptions.RemoveEmptyEntries);
-            //int step = 16;
-            List<TrainItemInfo> list=new List<TrainItemInfo>();
-            for (int i = 0; i < records.Length; i ++)
-            {
-                string[] contents = records[i].Split(',');
+           
+            List<TrainItemInfo> list = new List<TrainItemInfo>();
 
-                string trainNo = Common.HtmlUtil.RemoveHtml(contents[1]).Trim();
-                TrainItemInfo itemInfo=oldList.Find(p=>p.TrainNo==trainNo);
+            foreach (var item in response)
+            {
+                var trainItem = item.queryLeftNewDTO;
+                string trainNo = trainItem.station_train_code;
+                TrainItemInfo itemInfo = oldList.Find(p => p.TrainNo == trainNo);
                 if (itemInfo == null)
                     itemInfo = new TrainItemInfo();
+               // itemInfo.No =item.queryLeftNewDTO.
+                itemInfo.TrainNo = trainItem.station_train_code;
+                itemInfo.StartStation = trainItem.start_station_name;
+                itemInfo.EndStation = trainItem.end_station_name;
+                itemInfo.lishi = trainItem.lishi;
+                itemInfo.swz_num = trainItem.swz_num;
+                itemInfo.tz_num = trainItem.tz_num;
+                itemInfo.zy_num = trainItem.zy_num;// Common.HtmlUtil.RemoveHtml(contents[7]);
+                itemInfo.ze_num = trainItem.ze_num;//Common.HtmlUtil.RemoveHtml(contents[8]);
+                itemInfo.gr_num = trainItem.gr_num;//Common.HtmlUtil.RemoveHtml(contents[9]);
+                itemInfo.rw_num = trainItem.rw_num; //Common.HtmlUtil.RemoveHtml(contents[10]);
+                itemInfo.yw_num = trainItem.yw_num;//Common.HtmlUtil.RemoveHtml(contents[11]);
+                itemInfo.rz_num = trainItem.rz_num;// Common.HtmlUtil.RemoveHtml(contents[12]);
+                itemInfo.yz_num = trainItem.yz_num;// Common.HtmlUtil.RemoveHtml(contents[13]);
+                itemInfo.wz_num = trainItem.wz_num;//Common.HtmlUtil.RemoveHtml(contents[14]);
+                itemInfo.qt_num = trainItem.qt_num;//Common.HtmlUtil.RemoveHtml(contents[15]);
 
-
-                itemInfo.No = contents[0];
-                itemInfo.TrainNo = Common.HtmlUtil.RemoveHtml(contents[1]);
-                itemInfo.StartStation = Common.HtmlUtil.HtmlDecode(Common.HtmlUtil.RemoveHtml(contents[2])).Trim();
-                itemInfo.EndStation = Common.HtmlUtil.HtmlDecode(Common.HtmlUtil.RemoveHtml(contents[3])).Trim();
-                itemInfo.lishi = Common.HtmlUtil.RemoveHtml(contents[4]);
-                itemInfo.ShangwuSeat = Common.HtmlUtil.RemoveHtml(contents[5]);
-                itemInfo.TedengSeat = Common.HtmlUtil.RemoveHtml(contents[6]);
-                itemInfo.YidengSeat = Common.HtmlUtil.RemoveHtml(contents[7]);
-                itemInfo.ErdengSeat = Common.HtmlUtil.RemoveHtml(contents[8]);
-                itemInfo.GaojiRuanwoSeat = Common.HtmlUtil.RemoveHtml(contents[9]);
-                itemInfo.RuanwoSeat = Common.HtmlUtil.RemoveHtml(contents[10]);
-                itemInfo.YingwoSeat = Common.HtmlUtil.RemoveHtml(contents[11]);
-                itemInfo.RuanzuoSeat = Common.HtmlUtil.RemoveHtml(contents[12]);
-                itemInfo.YingzuoSeat = Common.HtmlUtil.RemoveHtml(contents[13]);
-                itemInfo.WuzuoSeat = Common.HtmlUtil.RemoveHtml(contents[14]);
-                itemInfo.OtherSeat = Common.HtmlUtil.RemoveHtml(contents[15]);
-
-
-                itemInfo.Tag = Common.HtmlUtil.RemoveHtml(contents[16]);
-                                             ;
-                string tag = contents[16];//<input type='button' class='yuding_u' onmousemove=this.className='yuding_u_over' onmousedown=this.className='yuding_u_down' onmouseout=this.className='yuding_u' onclick=javascript:getSelected('K105#16:03#23:45#240000K1050Q#BXP#NCG#15:48#北京西#南昌#1*****31714*****00041*****00063*****0000#6CFF0AEBE197C7375772402464FD0A02D0FBFA53D12A0190DE083F2A') value='预订'></input>
-                if (!string.IsNullOrEmpty(tag) && tag.Contains("getSelected('"))
-                {
-
-                    tag = tag.Split(new string[] {"getSelected('"},StringSplitOptions.RemoveEmptyEntries)[1].Split('\'')[0]; 
-                    //Z133#11:29#19:45#240000Z13307#BXP#NCG#07:14#北京西#南昌#01#05#1*****30004*****00011*****00006*****00013*****0000#F3ED9FF7BC7D88A97D9AAD036FAABE99B4223BD3FB94FF50044F66A2#P2
-                    //K105#16:03#23:45#240000K1050Q#BXP#NCG#15:48#北京西#南昌#1*****31714*****00041*****00063*****0000#6CFF0AEBE197C7375772402464FD0A02D0FBFA53D12A0190DE083F2A
-                   // K301#02:41#02:05#480000K30423#NCG#YCG#04:46#南昌#宜春#14#16#1*****31034*****00081*****00003*****0001#MzM1QThFRTVDODlBNjlCODVERUNDMUVEODc4NjdENjlCODNDN0I0OUQyRTJENkUwQzZCMjk4QkE6Ojo6MTM4MDM4MDY2NDk2Nw==#H2
-                    string[] tags = tag.Split('#');
-                    itemInfo.TrainNo = tags[0];
-                    itemInfo.lishi = tags[1];
-                    itemInfo.TrainStartTime = tags[2];
-                    itemInfo.TrainNo4 = tags[3];
-                    itemInfo.FromStationTelecode = tags[4];
-                    itemInfo.ToStationTelecode = tags[5];
-                    itemInfo.ArriveTime = tags[6];
-                    itemInfo.FromStationName = tags[7];
-                    itemInfo.ToStationName = tags[8];
-                    itemInfo.FromStationNo = tags[9];
-                    itemInfo.ToStationNo = tags[10];
-                    itemInfo.YpInfoDetail = tags[tags.Length - 3];
-                    itemInfo.MmStr = tags[tags.Length-2];
-                    itemInfo.LocationCode = tags[tags.Length - 1];
-                }
+                itemInfo.TrainNo4 = trainItem.train_no;
+                //itemInfo.Tag =trainItem. Common.HtmlUtil.RemoveHtml(contents[16]);
+                
+                   // itemInfo.TrainNo = tags[0];
+                   // itemInfo.lishi = tags[1];
+                itemInfo.TrainStartTime = trainItem.start_time;
+                   // itemInfo.TrainNo4 = tags[3];
+                itemInfo.FromStationTelecode = trainItem.from_station_telecode;
+                itemInfo.ToStationTelecode = trainItem.to_station_telecode;
+                itemInfo.ArriveTime = trainItem.arrive_time;
+                itemInfo.FromStationName = trainItem.from_station_name;
+                itemInfo.ToStationName = trainItem.to_station_name;
+                itemInfo.FromStationNo = trainItem.from_station_no;
+                itemInfo.ToStationNo = trainItem.to_station_no;
+                itemInfo.YpInfoDetail = trainItem.yp_info;
+                itemInfo.MmStr = item.secretStr;
+                itemInfo.LocationCode = trainItem.location_code;
+               
                 list.Add(itemInfo);
             }
             return list;
@@ -890,13 +868,14 @@ namespace LFNet.TrainTicket
 
         public override string ToString()
         {
-            if (Proxy!=null)
-            {return this.Username + "[" + Proxy.Address.Host + "]";
-               
+            if (Proxy != null)
+            {
+                return this.Username + "[" + Proxy.Address.Host + "]";
+
             }
             else
             {
-                 return this.Username;
+                return this.Username;
             }
             //    return base.ToString();
         }
@@ -917,7 +896,7 @@ namespace LFNet.TrainTicket
     /// </summary>
     public class AccountManager
     {
-       static Dictionary<string,Account> accounts=new Dictionary<string, Account>(); 
+        static Dictionary<string, Account> accounts = new Dictionary<string, Account>();
         /// <summary>
         /// 当账号密码代理ip变化时会创建新的账号，否则沿用原来的账号
         /// </summary>
@@ -925,21 +904,21 @@ namespace LFNet.TrainTicket
         /// <param name="password"></param>
         /// <param name="proxyIp"></param>
         /// <returns></returns>
-        public static Account GetAccount(string userName,string password,string proxyIp)
+        public static Account GetAccount(string userName, string password, string proxyIp)
         {
             string key = string.Format("{0},{1},{2}", userName, password, proxyIp).ToLower();
-            if(accounts.ContainsKey(key))
+            if (accounts.ContainsKey(key))
             {
                 return accounts[key];
             }
             else
             {
-                Account account=new Account(userName,password,proxyIp);
-                accounts.Add(key,account);
+                Account account = new Account(userName, password, proxyIp);
+                accounts.Add(key, account);
                 return account;
             }
         }
 
-       
+
     }
 }

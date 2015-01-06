@@ -40,8 +40,8 @@ namespace LFNet.TrainTicket
             //先获取乘客
             try
             {
-                ResPassengerJsonInfo passengerJsonInfo = account.GetPassengers();
-                foreach (PassengerJsonInfo jsonInfo in passengerJsonInfo.PassengerJson)
+                GetPassengerDTOs passengerJsonInfo = account.GetPassengers();
+                foreach (NormalPassenger jsonInfo in passengerJsonInfo.normal_passengers)
                 {
                     var find = TicketSetting.Passengers.Find(p => p.Name == jsonInfo.passenger_name);
                     if (find == null)
@@ -128,7 +128,7 @@ namespace LFNet.TrainTicket
             }
             if (Stop) return;
 
-            ResPassengerJsonInfo resPassengerJsonInfo = account.GetPassengers(); //获取乘客信息
+            GetPassengerDTOs resPassengerJsonInfo = account.GetPassengers(); //获取乘客信息
             if (Stop) return;
 
             int vcodeCnt = 1;
@@ -458,6 +458,8 @@ namespace LFNet.TrainTicket
             {
                 try
                 {
+                    
+                    account.Login();
                     LoginAysnSuggestInfo loginAysnSuggestInfo = account.LoginAysnSuggest();
                     if (loginAysnSuggestInfo != null && loginAysnSuggestInfo.RandError == "Y")
                     {

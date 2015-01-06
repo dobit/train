@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 namespace LFNet.TrainTicket.Config
@@ -8,6 +9,8 @@ namespace LFNet.TrainTicket.Config
     /// </summary>
     public class OrderRequest
     {
+        private DateTime _backTrainDate;
+
         /// <summary>
         /// ÈÕÆÚ
         /// </summary>
@@ -48,5 +51,14 @@ namespace LFNet.TrainTicket.Config
 
         public string StartTimeStr { get; set; }
 
+        //public DateTime BackTrainDate
+        //{
+        //    get
+        //    {
+        //        if(_backTrainDate<DateTime.Now)
+        //        return _backTrainDate;
+        //    }
+        //    set { _backTrainDate = value; }
+        //}
     }
 }
