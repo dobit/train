@@ -72,9 +72,9 @@ namespace LFNet.TrainTicket
             this.Password = password;
             if (!string.IsNullOrEmpty(proxyIp))
                 Proxy = new WebProxy(proxyIp, 443); //https代理
-            //  JHttpClient = new JHttpClient(Proxy) { Cookie=Cookie};
         }
 
+        
         /// <summary>
         /// 获取登录时的验证码,自动重试当错误出现3次以上抛异常
         /// </summary>
@@ -111,20 +111,7 @@ namespace LFNet.TrainTicket
             return vcode;
         }
        
-        ///// <summary>
-        ///// 获取登录随机数
-        ///// </summary>
-        ///// <returns></returns>
-        //public string GetLoginRand()
-        //{
-
-        //    LoginAysnSuggestInfo loginAysnSuggestInfo = HttpRequest.Create("https://dynamic.12306.cn/otsweb/loginAction.do?method=loginAysnSuggest", "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<LoginAysnSuggestInfo>();
-        //    if (loginAysnSuggestInfo != null && loginAysnSuggestInfo.RandError == "Y")
-        //    {
-        //        return loginAysnSuggestInfo.LoginRand;
-        //    }
-        //    return "";
-        //}
+        
 
         /// <summary>
         /// 检查服务器状态
@@ -152,20 +139,22 @@ namespace LFNet.TrainTicket
         }
         
 
-        public void Login( bool auto=false)
+        public async void Login( bool auto=false)
         {
             //打开登陆页面
-            var loginPageContent = this.GetHttpClient(ActionUrls.TicketHomePage).GetStringAsync(ActionUrls.LoginPageUrl).Result;
+            var loginPageContent = await this.GetLoginPageContent();
+            var dy=await this.GetDynamicJsAction()
 
             var keyValues = GetDynamicJsAction(loginPageContent, ActionUrls.LoginPageUrl);
-
+            Image image = await this.Cookie.GetRandCode(); //获取验证码
             string vcode = ""; // GetVerifyCode(VCodeType.Login, ref auto);
             do
             {
                 vcode = GetLoginVCode();
+
             } while (!CheckRandCodeAnsyn(vcode, 0, ""));
 
-            // loginUserDTO.user_name=mydobit&userDTO.password=03265791&randCode=6eed&randCode_validate=&OTU2MzI1=YzRhNGM5ZTdmODI2MjczZg%3D%3D&myversion=undefined
+            // loginUserDTO.user_name=mydobit&userDTO.password=&randCode=6eed&randCode_validate=&OTU2MzI1=YzRhNGM5ZTdmODI2MjczZg%3D%3D&myversion=undefined
 
             Dictionary<string, string> nameValues = new Dictionary<string, string>()
                 {
@@ -179,7 +168,7 @@ namespace LFNet.TrainTicket
             {
                 nameValues.Add(keyValue.Key, keyValue.Value);
             }
-            Thread.Sleep(5000);
+            Thread.Sleep(6000);
             Response<LoginAysnSuggestResponse> response = this.GetHttpClient(ActionUrls.LoginPageUrl,true)
                 .PostAsync(ActionUrls.LoginAysnSuggestUrl, new FormUrlEncodedContent(nameValues))
                 .Result.Content.ReadAsStringAsync()
@@ -297,7 +286,7 @@ namespace LFNet.TrainTicket
         public bool CheckUser()
         {
           var response= this.GetHttpClient(ActionUrls.QueryPageUrl)
-                .PostAsync("https://kyfw.12306.cn/otn/login/checkUse", new StringContent(""))
+                .PostAsync("https://kyfw.12306.cn/otn/login/checkUser", new StringContent(""))
                 .Result.Content.ReadAsStringAsync()
                 .Result.ToJsonObject<Response<CheckUserResponse>>();
             return response.data.flag;
@@ -322,7 +311,7 @@ namespace LFNet.TrainTicket
             this.GetHttpClient(ActionUrls.QueryPageUrl).GetStringAsync(url.Replace("queryT", "log"));
             var response =this.GetHttpClient(ActionUrls.QueryPageUrl).GetStringAsync(url).Result.ToJsonObject<Response<QueryResponse>>();
 
-               
+               if(response.status)
                 return ToTrainItemInfos(response.data, oldList);
           
             return list;
@@ -420,7 +409,7 @@ namespace LFNet.TrainTicket
             foreach (Passenger passenger in passengers)
             {
                 /*
-                 * passengerTickets=3,0,1,林利,1,362201198...,15910675179,Y
+                 * passengerTickets=3,0,1,林利,1,362201198...,1591,Y
                  * &oldPassengers=林利,1,362201198...&passenger_1_seat=3&passenger_1_seat_detail_select=0&passenger_1_seat_detail=0&passenger_1_ticket=1&passenger_1_name=林利&passenger_1_cardtype=1&passenger_1_cardno=362201198&passenger_1_mobileno=15910675179&checkbox9=Y
                  * */
                 if (passenger.Checked)
@@ -559,14 +548,36 @@ namespace LFNet.TrainTicket
 {"back_train_date",backTrainDate},
 {"tour_flag","dc"},
 {"purpose_codes","ADULT"},
-{"query_from_station_name",Global.GetStations().First(p=>p.Code==config.OrderRequest.FromStationTelecodeName).Name},
-{"query_to_station_name",Global.GetStations().First(p=>p.Code==config.OrderRequest.ToStationTelecode).Name},
+{"query_from_station_name",config.OrderRequest.FromStationTelecodeName},
+{"query_to_station_name",config.OrderRequest.ToStationTelecodeName},
 {"undefined",""},
             };
             foreach (var keyValue in this.QueryDynamicJsActionResult)
             {
                 newforms.Add(keyValue.Key, keyValue.Value);
             }
+           /*_jc_save_czxxcx_toStation=%u5B9C%u6625%u897F%2CYCG; 
+            * _jc_save_czxxcx_fromDate=2014-12-25;  
+            * _jc_save_fromStation=%u5317%u4EAC%2CBJP;
+            * _jc_save_toStation=%u5357%u660C%2CNCG; 
+            * _jc_save_fromDate=2015-02-19; 
+            * _jc_save_toDate=2014-12-31; 
+            * _jc_save_wfdc_flag=dc; 
+            * current_captcha_type=C
+            * */
+            DateTime expires = DateTime.Now.AddDays(365);
+            CookieCollection cookieCollection=new CookieCollection()
+            {
+                //new Cookie("_jc_save_czxxcx_toStation",""),
+                //new Cookie("_jc_save_czxxcx_fromDate","2014-12-25"),
+             new Cookie("_jc_save_fromStation",Common.HtmlUtil.UrlEncode(config.OrderRequest.FromStationTelecodeName+","+config.OrderRequest.FromStationTelecode)){Expires = expires },
+             new Cookie("_jc_save_toStation",Common.HtmlUtil.UrlEncode(config.OrderRequest.ToStationTelecodeName+","+config.OrderRequest.ToStationTelecode)){Expires = expires },
+             new Cookie("_jc_save_fromDate",config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
+             new Cookie("_jc_save_toDate",config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
+             new Cookie("_jc_save_wfdc_flag","dc"){Expires = expires },
+            // new Cookie("current_captcha_type","C"){Expires = expires },
+            };
+            this.Cookie.Add(new Uri(ActionUrls.TicketHomePage), cookieCollection);
             var response = this.GetHttpClient(ActionUrls.QueryPageUrl, true)
                 .PostAsync("https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest",
                     new FormUrlEncodedContent(newforms))
@@ -595,44 +606,7 @@ namespace LFNet.TrainTicket
         }
 
 
-        ///// <summary>
-        ///// 获取登录时的验证码,自动重试当错误出现3次以上抛异常
-        ///// </summary>
-        ///// <returns>返回BREAK 表示用户终止执行 否则为验证码值</returns>
-        //public string GetVerifyCode(VCodeType vCodeType, ref bool auto)
-        //{
-        //    //0.9789911571440171
-        //    Random random = new Random(DateTime.Now.Millisecond);
-
-        //    string url = "https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=login&rand=sjrand&" + random.NextDouble(); ;
-        //    string referUrl = "https://dynamic.12306.cn/otsweb/loginAction.do?method=init";
-        //    if (vCodeType == VCodeType.SubmitOrder)
-        //    {
-        //        url = "https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=passenger&rand=randp&" + random.NextDouble(); ;
-        //        referUrl = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init";
-        //    }
-        //    string vcode = "";
-        //    do
-        //    {
-        //        Stream stream = HttpRequest.Create(url, referUrl, Cookie, HttpMethod.GET, "", Proxy).GetStream();
-        //        Image image = Image.FromStream(stream);
-
-        //        vcode = new Cracker().Read(new Bitmap(image));
-        //        if (vcode.Length < 4)
-        //        {
-        //            if (auto)
-        //                vcode = "";
-        //            else
-        //                vcode = GetVCodeByForm(image);
-        //        }
-
-        //        //vcode = GetVCodeByForm(image);
-        //        if (vcode == "BREAK")
-        //            return "用户终止";
-        //    } while (vcode == "");
-        //    return vcode;
-        //}
-
+        
         /// <summary>
         /// 验证码
         /// </summary>

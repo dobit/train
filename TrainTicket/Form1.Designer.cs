@@ -408,16 +408,16 @@
             this.tbTime.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.orderRequestBindingSource, "StartTimeStr", true));
             this.tbTime.FormattingEnabled = true;
             this.tbTime.Items.AddRange(new object[] {
-            "00:00--24:00",
+            "00:00--23:59",
             "00:00--06:00",
             "06:00--12:00",
             "12:00--18:00",
-            "18:00--24:00"});
+            "18:00--23:59"});
             this.tbTime.Location = new System.Drawing.Point(665, 24);
             this.tbTime.Name = "tbTime";
             this.tbTime.Size = new System.Drawing.Size(97, 20);
             this.tbTime.TabIndex = 17;
-            this.tbTime.Text = "00:00--24:00";
+            this.tbTime.Text = "00:00--23:59";
             // 
             // label7
             // 

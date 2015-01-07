@@ -296,12 +296,14 @@ namespace LFNet.TrainTicket
                                     }
                                     Passenger[] passengers =
                                         Config.BuyTicketConfig.Instance.Passengers.Where(p => p.Checked).ToArray();
+                                    Thread.Sleep(10000);
                                     //检查用户状态
                                     if (!account.CheckUser()) //失败则再登录
                                     {
                                         Log(account,"需要重新登录");
                                         account.Login();
                                     }
+                                    
                                 SubmitOrderRequest:
                                     var htmlForm = account.SubmitOrderRequest(optimizeTrain, passengers
                                                                                               , seatType == SeatType.无座
