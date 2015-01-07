@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="Account.cs" />
     <Compile Include="ActionUrls.cs" />
+    <Compile Include="ClientEventArgs.cs" />
     <Compile Include="Cracker.cs" />
     <Compile Include="Config\PayType.cs" />
     <Compile Include="DataProvider.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="Global.cs" />
     <Compile Include="HttpMethod.cs" />
     <Compile Include="HttpRequest.cs" />
+    <Compile Include="InitDcResult.cs" />
     <Compile Include="InterfaceProvider.cs" />
     <Compile Include="IQuery.cs" />
     <Compile Include="Config\Passenger.cs" />

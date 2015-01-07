@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using LFNet.Configuration;
 using LFNet.Net.Http;
@@ -79,10 +80,13 @@ namespace LFNet.TrainTicket
         /// </summary>
         /// <param name="account"></param>
         /// <returns></returns>
-        public static async Task<string> GetLoginPageResult(this Account account)
+        public static async Task<LoginPageResult> GetLoginPageResult(this Account account)
         {
           string content=   await GetStringAsync(account, LoginPageUrl, TicketHomePage);
-          
+          DynamicJsResult dynamicJsResult=  await GetDynamicJsAction(account, content, LoginPageUrl);
+            LoginPageResult result=new LoginPageResult();
+            result.DynamicJsResult = dynamicJsResult;
+            return result;
         }
 
         /// <summary>
@@ -145,6 +149,8 @@ namespace LFNet.TrainTicket
 
 
         }
+
+
         /// <summary>
         /// ¼ì²é·þÎñÆ÷×´Ì¬
         /// </summary>
@@ -199,30 +205,43 @@ namespace LFNet.TrainTicket
             result.Key = key;
             result.Value = value;
 
-            //Dictionary<string, string> result = new Dictionary<string, string>()
-            // {
-            //     {key,value},
-            //     {"myversion","undefined"}
-            // };
+            
             Regex postUrlRegex = new Regex(@"/otn/dynamicJs/(.*?)'", RegexOptions.IgnoreCase | RegexOptions.Compiled);
             string postUrl = new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + postUrlRegex.Match(jsContent).Groups[1]).ToString();
-            result.PostDynamicJsUrl = postUrl;
 
-            //HttpResponseMessage httpResponseMessage = await GetHttpClient(account,pageUrl, true).PostAsync(postUrl, new StringContent(""));
+            Task<string> postDynamicJsStringAsync = PostDynamicJsStringAsync(account, LoginPageUrl, postUrl);
+            postDynamicJsStringAsync.DelayToRun(1000);
             return result;
 
         }
 
-        public static async Task<string> GetDynamicJsStringAsync(this Account account, string referrer, string dynamicJsUrl)
+        
+
+        private static async Task<string> GetDynamicJsStringAsync(this Account account, string referrer, string dynamicJsUrl)
         {
-            return await GetHttpClient(account, referrer).GetStringAsync(dynamicJsUrl);
+            return await  GetStringAsync(account,dynamicJsUrl, referrer);
         }
-        public static async Task<string> PostDynamicJsStringAsync(this Account account, string referrer, string dynamicJsUrl)
+        private static async Task<string> PostDynamicJsStringAsync(this Account account, string referrer, string dynamicJsUrl)
         {
-            HttpResponseMessage httpResponseMessage = await GetHttpClient(account, referrer).PostAsync(dynamicJsUrl, new StringContent(""));
-            return await httpResponseMessage.Content.ReadAsStringAsync();
+            return await PostToStringAsync(account, dynamicJsUrl, new StringContent(""), referrer);
         }
         #endregion
+
+        public static async Task<Response<LoginAysnSuggestResponse>> LoginAsynSuggest(this Account account,string userName,string password,string randCode, string key,string value)
+        {
+            Dictionary<string, string> nameValues = new Dictionary<string, string>()
+                {
+                    {"loginUserDTO.user_name",userName},
+                    {"userDTO.password",password},
+                    {"randCode",randCode},
+                     {"randCode_validate",""},
+                   {key,value},
+                   {"myversion","undefined"	},  
+                };
+            
+            return await AjaxPostToJsonObjectAsync<Response<LoginAysnSuggestResponse>>(account, LoginAysnSuggestUrl,
+                new FormUrlEncodedContent(nameValues), LoginPageUrl);
+        }
 
 
         /// <summary>
@@ -352,12 +371,17 @@ namespace LFNet.TrainTicket
         /// </summary>
         /// <param name="account"></param>
         /// <returns></returns>
-        public static async Task<string> GetInitDc(this Account account)
+        public static async Task<InitDcResult> GetInitDc(this Account account)
         {
-            return
-                await
-                    AjaxPostToStringAsync(account, "https://kyfw.12306.cn/otn/confirmPassenger/initDc",
+          
+            string content=await
+                    AjaxPostToStringAsync(account, OrderPageUrl,
                         new UrlEncodedContent(new { _json_att = "" }), QueryPageUrl);
+            DynamicJsResult dynamicJsResult = await GetDynamicJsAction(account, content, OrderPageUrl);
+            InitDcResult result= new InitDcResult() {DynamicJsResult = dynamicJsResult};
+
+
+            return result;
         }
 
         /// <summary>
@@ -664,6 +688,15 @@ namespace LFNet.TrainTicket
         #endregion
     }
 
+    public class DynamicJsResult
+    {
+        public string Key { get; set; }
 
+        public string Value { get; set; }
+    }
 
+    public class LoginPageResult
+    {
+        public DynamicJsResult DynamicJsResult { get; set; }
+    }
 }

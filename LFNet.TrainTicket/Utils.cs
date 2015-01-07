@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using MSScriptControl;
 using Newtonsoft.Json;
 using Microsoft.JScript;
@@ -23,6 +27,42 @@ namespace LFNet.TrainTicket
             httpClient.DefaultRequestHeaders.Add("Origin"," https://kyfw.12306.cn");
             httpClient.DefaultRequestHeaders.Add("Connection","keep-alive");
             return httpClient;
+        }
+
+        /// <summary>
+        /// 延时执行
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="task"></param>
+        /// <param name="milliseconds"></param>
+        public static async void DelayToRun<T>(this Task<T> task, int milliseconds)
+        {
+            Thread.Sleep(milliseconds);//休眠指定时间
+           await task;
+           // return "";
+        }
+
+        /// <summary>
+        /// 通过窗体获取验证码
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<string> GetVCodeByForm(this Image image)
+        {
+            return await Task.Run(() =>
+            {
+                string ret;
+                VCodeForm vCodeForm = new VCodeForm(image);
+                if (vCodeForm.ShowDialog() == DialogResult.OK)
+                {
+                    ret = vCodeForm.Value.Trim();
+                }
+                else
+                    ret = "";
+                vCodeForm.Dispose();
+                System.GC.ReRegisterForFinalize(vCodeForm);
+                return ret;
+            });
+
         }
 
         /// <summary>

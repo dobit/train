@@ -47,10 +47,27 @@ namespace LFNet.TrainTicket
     public class Account
     {
 
+        #region Events
+
+        public event EventHandler<ClientEventArgs> ClientChanged;
+
+        /// <summary>
+        /// 触发事件
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void OnClientChanged(string message)
+        {
+            EventHandler<ClientEventArgs> handler = ClientChanged;
+            if (handler != null) handler(this, new ClientEventArgs(message));
+        }
+
+        #endregion
+        private bool _stop = false;
         public string Username { get; private set; }
         public string Password { get; private set; }
         //public AccountInfo AccountInfo { get { return Config.BuyTicketConfig.Instance.AccountInfo; } }
         public WebProxy Proxy { get; set; }
+
         private CookieContainer _cookie = new CookieContainer();
 
         // public JHttpClient JHttpClient { get; set; }
@@ -74,43 +91,11 @@ namespace LFNet.TrainTicket
                 Proxy = new WebProxy(proxyIp, 443); //https代理
         }
 
+        public void Stop()
+        {
+            _stop = true;
+        }
         
-        /// <summary>
-        /// 获取登录时的验证码,自动重试当错误出现3次以上抛异常
-        /// </summary>
-        /// <returns></returns>
-        public string GetLoginVCode()
-        {
-            string vcode = "";
-            do
-            {
-                //https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp& 
-                Stream stream = this.GetHttpClient(ActionUrls.LoginPageUrl).GetStreamAsync("https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=login&rand=sjrand&0." + new Random().Next(10000000, 99999999) + new Random().Next(10000000, 99999999)).Result;
-                Image image = Image.FromStream(stream);
-                vcode = GetVCodeByForm(image);
-
-            } while (vcode == "");
-            return vcode;
-        }
-
-        /// <summary>
-        /// 获取下单的验证码
-        /// </summary>
-        /// <returns></returns>
-        public string GetOrderVCode()
-        {
-            string vcode = "";
-            do
-            {
-                //https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp& 
-                Stream stream = this.GetHttpClient(ActionUrls.LoginPageUrl).GetStreamAsync("https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp&0." + new Random().Next(10000000, 99999999) + new Random().Next(10000000, 99999999)).Result;
-                Image image = Image.FromStream(stream);
-                vcode = GetVCodeByForm(image);
-
-            } while (vcode == "");
-            return vcode;
-        }
-       
         
 
         /// <summary>
@@ -138,95 +123,128 @@ namespace LFNet.TrainTicket
             }
         }
         
-
+        /// <summary>
+        /// 登录
+        /// </summary>
+        /// <param name="auto"></param>
         public async void Login( bool auto=false)
         {
             //打开登陆页面
-            var loginPageContent = await this.GetLoginPageContent();
-            var dy=await this.GetDynamicJsAction()
+            var loginPageResult = await this.GetLoginPageResult();
 
-            var keyValues = GetDynamicJsAction(loginPageContent, ActionUrls.LoginPageUrl);
-            Image image = await this.Cookie.GetRandCode(); //获取验证码
-            string vcode = ""; // GetVerifyCode(VCodeType.Login, ref auto);
-            do
+            var vcode = await GetRandCode();
+
+            Thread.Sleep(5000); //单击等待
+            Response<LoginAysnSuggestResponse> response =
+                await 
+                    this.LoginAsynSuggest(this.Username, this.Password, vcode, loginPageResult.DynamicJsResult.Key,loginPageResult.DynamicJsResult.Value);
+            if (response.data != null && response.data.loginCheck == "Y")
             {
-                vcode = GetLoginVCode();
-
-            } while (!CheckRandCodeAnsyn(vcode, 0, ""));
-
-            // loginUserDTO.user_name=mydobit&userDTO.password=&randCode=6eed&randCode_validate=&OTU2MzI1=YzRhNGM5ZTdmODI2MjczZg%3D%3D&myversion=undefined
-
-            Dictionary<string, string> nameValues = new Dictionary<string, string>()
-                {
-                    {"loginUserDTO.user_name",this.Username},
-                    {"userDTO.password",this.Password},
-                    {"randCode",vcode},
-                     {"randCode_validate",""},
-                   
-                };
-            foreach (var keyValue in keyValues)
-            {
-                nameValues.Add(keyValue.Key, keyValue.Value);
-            }
-            Thread.Sleep(6000);
-            Response<LoginAysnSuggestResponse> response = this.GetHttpClient(ActionUrls.LoginPageUrl,true)
-                .PostAsync(ActionUrls.LoginAysnSuggestUrl, new FormUrlEncodedContent(nameValues))
-                .Result.Content.ReadAsStringAsync()
-                .Result.ToJsonObject<Response<LoginAysnSuggestResponse>>();
-            if (response.data == null)
-            {
-                throw new Exception(response.messages[0].ToString());
-            }
-            IsLogin = response.data.loginCheck == "Y";
-
-            //查询准备 打开查询页 获取页面动态js结果
-            string leftTicketContent = this.GetHttpClient(ActionUrls.InitMy12306PageUrl)
-                .GetStringAsync(ActionUrls.LeftTicketUrl).Result;
-            Dictionary<string, string> dynamicJsAction = GetDynamicJsAction(leftTicketContent, ActionUrls.LeftTicketUrl);//获取动态js检测结果
-
-            QueryDynamicJsActionResult = dynamicJsAction;
-        }
-
-        public Dictionary<string, string> QueryDynamicJsActionResult { get; set; }
-        /// <summary>
-        /// 检查验证码
-        /// </summary>
-        /// <param name="randCode">验证码</param>
-        /// <param name="randType">0=登陆，1下单</param>
-        /// <param name="token">档randtype=2必须有</param>
-        /// <returns></returns>
-        public bool CheckRandCodeAnsyn(string randCode,int randType,string token)
-        {
-            //randCode=6eed&rand=sjrand&randCode_validate=
-            //randCode=nsph&rand=randp&_json_att=&REPEAT_SUBMIT_TOKEN=c92104171aee0b7323c8e2466a9d3f8c
-            if (randType == 0)
-            {
-                return this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync(ActionUrls.CheckRandCodeAnsynUrl, new
-                {
-                    randCode,
-                    rand = "sjrand",
-                    randCode_validate = ""
-                }.ToUrlEncodedContent())
-                    .Result.Content.ReadAsStringAsync()
-                    .Result.ToJsonObject<Response<CheckRandCodeAnsynResponse>>()
-                    .data.result == "1";
+                IsLogin = true;
+                Info("登录成功");
             }
             else
             {
-                return this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync(ActionUrls.CheckRandCodeAnsynUrl, new
-                {
-                    randCode,
-                    rand = "randp",
-                    _json_att="",
-                    REPEAT_SUBMIT_TOKEN=token
-                }.ToUrlEncodedContent())
-                    .Result.Content.ReadAsStringAsync()
-                    .Result.ToJsonObject<Response<CheckRandCodeAnsynResponse>>()
-                    .data.result == "1";
+                Info(response.messages[0].ToString());
+                return;
             }
+
 
            
         }
+
+        private DateTime _queryPageTime;
+        private DynamicJsResult _queryPageDynamicJsResult;
+
+        /// <summary>
+        /// 查询
+        /// </summary>
+        public async void QueryLeftTicket()
+        {
+            if (_queryPageDynamicJsResult == null || (DateTime.Now - _queryPageTime).TotalMinutes > 20)
+            {
+                //查询准备 打开查询页 获取页面动态js结果
+                string leftTicketContent = this.GetHttpClient(ActionUrls.InitMy12306PageUrl)
+                    .GetStringAsync(ActionUrls.LeftTicketUrl).Result;
+                Dictionary<string, string> dynamicJsAction = GetDynamicJsAction(leftTicketContent, ActionUrls.LeftTicketUrl);//获取动态js检测结果
+
+                QueryDynamicJsActionResult = dynamicJsAction;
+            }
+            //查询
+
+        }
+
+        /// <summary>
+        /// 获取一个有效的验证码
+        /// </summary>
+        /// <returns></returns>
+        private async Task<string> GetRandCode(int type=0)
+        {
+            string vcode = "";
+            do
+            {
+                Image image = await InterfaceProvider.GetRandCode(this,type);
+                var codeByForm = image.GetVCodeByForm();
+                Thread.Sleep(5000); //等待5s 输入时间
+                vcode = await codeByForm;
+                if (_stop) return vcode;
+                var checkRandCodeAnsynResponse = await this.CheckRandCodeAnsyn(vcode, type, "");
+
+                if (checkRandCodeAnsynResponse.data != null && checkRandCodeAnsynResponse.data.result == "1") break;
+                else
+                {
+                    Info(checkRandCodeAnsynResponse.messages[0].ToString());
+                }
+            } while (true);
+            return vcode;
+        }
+
+        private async void Info(string  message)
+        {
+            OnClientChanged(message);
+        }
+
+
+        public Dictionary<string, string> QueryDynamicJsActionResult { get; set; }
+        ///// <summary>
+        ///// 检查验证码
+        ///// </summary>
+        ///// <param name="randCode">验证码</param>
+        ///// <param name="randType">0=登陆，1下单</param>
+        ///// <param name="token">档randtype=2必须有</param>
+        ///// <returns></returns>
+        //public bool CheckRandCodeAnsyn(string randCode,int randType,string token)
+        //{
+        //    //randCode=6eed&rand=sjrand&randCode_validate=
+        //    //randCode=nsph&rand=randp&_json_att=&REPEAT_SUBMIT_TOKEN=c92104171aee0b7323c8e2466a9d3f8c
+        //    if (randType == 0)
+        //    {
+        //        return this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync(ActionUrls.CheckRandCodeAnsynUrl, new
+        //        {
+        //            randCode,
+        //            rand = "sjrand",
+        //            randCode_validate = ""
+        //        }.ToUrlEncodedContent())
+        //            .Result.Content.ReadAsStringAsync()
+        //            .Result.ToJsonObject<Response<CheckRandCodeAnsynResponse>>()
+        //            .data.result == "1";
+        //    }
+        //    else
+        //    {
+        //        return this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync(ActionUrls.CheckRandCodeAnsynUrl, new
+        //        {
+        //            randCode,
+        //            rand = "randp",
+        //            _json_att="",
+        //            REPEAT_SUBMIT_TOKEN=token
+        //        }.ToUrlEncodedContent())
+        //            .Result.Content.ReadAsStringAsync()
+        //            .Result.ToJsonObject<Response<CheckRandCodeAnsynResponse>>()
+        //            .data.result == "1";
+        //    }
+
+           
+        //}
         /// <summary>
         /// 页面动态js检查
         /// </summary>
@@ -769,24 +787,7 @@ namespace LFNet.TrainTicket
             ResYpInfo resYpInfo = HttpRequest.Create(queryUrl, "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init", Cookie, HttpMethod.GET, "").GetJsonObject<ResYpInfo>();
             return resYpInfo;
         }
-        /// <summary>
-        /// 通过窗体获取验证码
-        /// </summary>
-        /// <returns></returns>
-        public static string GetVCodeByForm(Image image)
-        {
-            string ret;
-            VCodeForm vCodeForm = new VCodeForm(image);
-            if (vCodeForm.ShowDialog() == DialogResult.OK)
-            {
-                ret = vCodeForm.Value.Trim();
-            }
-            else
-                ret = "BREAK";
-            vCodeForm.Dispose();
-            System.GC.ReRegisterForFinalize(vCodeForm);
-            return ret;
-        }
+        
 
         public static List<TrainItemInfo> ToTrainItemInfos(QueryResponse response, List<TrainItemInfo> oldList)
         {
@@ -840,6 +841,8 @@ namespace LFNet.TrainTicket
             return list;
         }
 
+
+        
         public override string ToString()
         {
             if (Proxy != null)
@@ -854,7 +857,10 @@ namespace LFNet.TrainTicket
             //    return base.ToString();
         }
 
+
+
     }
+
     /// <summary>
     /// 验证码类型
     /// </summary>
