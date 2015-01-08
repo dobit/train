@@ -173,20 +173,6 @@ namespace LFNet.TrainTicket
 
        
 
-        /// <summary>
-        /// 查询
-        /// </summary>
-        public async void QueryLeftTicket()
-        {
-            OpenQueryPage();
-            //查询联系人
-
-            //查询
-            
-        }
-
-
-
       
 
         /// <summary>

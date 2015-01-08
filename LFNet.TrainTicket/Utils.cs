@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using LFNet.TrainTicket.Config;
 using MSScriptControl;
 using Newtonsoft.Json;
 using Microsoft.JScript;
@@ -27,6 +28,24 @@ namespace LFNet.TrainTicket
             httpClient.DefaultRequestHeaders.Add("Origin"," https://kyfw.12306.cn");
             httpClient.DefaultRequestHeaders.Add("Connection","keep-alive");
             return httpClient;
+        }
+
+
+        public static string ToDisplayString(this List<TrainItemInfo> list)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("======查询到列车信息====");
+            sb.Append("车次\t历时\t商务座\t特等座\t一等座\t二等座\t高级软\t软卧\t硬卧\t软座\t硬座\t无座\t其他\r\n");
+            foreach (TrainItemInfo trainItemInfo in list)
+            {
+                //if (cbShowRealYp.Checked)
+                //{
+                trainItemInfo.ParseYpDetail();
+                //}
+                sb.Append(trainItemInfo.ToStringWithNoStation());
+                sb.AppendLine();
+            }
+            return sb.ToString();
         }
 
         /// <summary>

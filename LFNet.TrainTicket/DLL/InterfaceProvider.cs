@@ -330,29 +330,27 @@ namespace LFNet.TrainTicket
         /// <summary>
         /// https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=submutOrderRequest
         /// </summary>
+        /// <param name="client"></param>
         /// <param name="secretStr">加密串</param>
-        /// <param name="trainDate">去程日期</param>
-        /// <param name="backTrainDate">返程日期</param>
-        /// <param name="fromStationTeleCode"></param>
-        /// <param name="toStationTeleCode"></param>
-        /// <param name="type">0=成人,1=学生</param>
+        /// <param name="queryPageDynamicJsResult"></param>
+        /// <param name="account"></param>
         /// <returns>得到页面的表单信息</returns>
-        public static async Task<Response<string>> SubmitOrderRequest(this Client client, string secretStr, string dynamicJsKey, string dynamicJsValue, DateTime trainDate, DateTime backTrainDate, string fromStationTeleCode, string toStationTeleCode, int type = 0)
+        public static async Task<Response<string>> SubmitOrderRequest(this Client client, string secretStr, DynamicJsResult queryPageDynamicJsResult,  AccountInfo account)
         {
 
             var config = ConfigFileManager.GetConfig<BuyTicketConfig>();
             ;
             Dictionary<string, string> newforms = new Dictionary<string, string>()
             {
-                {dynamicJsKey,dynamicJsValue	},   
+                {queryPageDynamicJsResult.Key,queryPageDynamicJsResult.Value	},   
                 {"myversion","undefined"	},  
                 {"secretStr",secretStr	},
-                {"train_date",	trainDate.ToString("yyyy-MM-dd")},
-                {"back_train_date",backTrainDate.ToString("yyyy-MM-dd")},
+                {"train_date",	account.TrainDate.ToString("yyyy-MM-dd")},
+                {"back_train_date",account.BackTrainDate.ToString("yyyy-MM-dd")},
                 {"tour_flag","dc"},
                 {"purpose_codes","ADULT"},
-                {"query_from_station_name",config.OrderRequest.FromStationTelecodeName},
-                {"query_to_station_name",config.OrderRequest.ToStationTelecodeName},
+                {"query_from_station_name",account.FromStation},
+                {"query_to_station_name",account.ToStation},
                 {"undefined",""},
             };
 
@@ -411,7 +409,17 @@ namespace LFNet.TrainTicket
             DynamicJsResult dynamicJsResult = await GetDynamicJsAction(client, content, OrderPageUrl);
             InitDcResult result= new InitDcResult() {DynamicJsResult = dynamicJsResult};
 
-
+            Regex regex = new Regex(@"[A-z0-9]{32,}");
+            var matches = regex.Matches(content);
+            string token = matches[0].Groups[1].ToString();
+            string key_check_isChange = matches[1].Groups[1].ToString();
+            string leftTicketStr = matches[2].Groups[1].ToString();
+            result.RepeatSubmitToken = token;
+            result.KeyCheckIsChange = key_check_isChange;
+            result.LeftTicketStr = leftTicketStr;
+            
+            
+          
             return result;
         }
 
@@ -420,7 +428,7 @@ namespace LFNet.TrainTicket
         /// </summary>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<Response<CheckOrderInfoResponse>> CheckOrderInfoAsync(this Client client, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, string dynamicJsKey, string dynamicJsValue, string submitToken)
+        public static async Task<Response<CheckOrderInfoResponse>> CheckOrderInfoAsync(this Client client, IEnumerable<PassengerInfo> passengers, SeatType seatType, string randCode,InitDcResult initDcResult)
         {
             /*
              * cancel_flag	2
@@ -435,7 +443,7 @@ namespace LFNet.TrainTicket
              */
             string passengerTicketStr = "";
             string oldPassengerStr = "";
-            foreach (Passenger passenger in passengers)
+            foreach (PassengerInfo passenger in passengers)
             {
                 /*
                  * passengerTickets=3,0,1,林利,1,362201198...,1591,Y
@@ -464,9 +472,9 @@ namespace LFNet.TrainTicket
                 {"oldPassengerStr",oldPassengerStr},
                 {"tour_flag","dc"},
                 {"randCode",randCode},
-                {dynamicJsKey,dynamicJsValue},
+                {initDcResult.DynamicJsResult.Key,initDcResult.DynamicJsResult.Value},
                 {"_json_att",""},
-                {"REPEAT_SUBMIT_TOKEN",submitToken},
+                {"REPEAT_SUBMIT_TOKEN",initDcResult.RepeatSubmitToken},
             };
             return await AjaxPostToJsonObjectAsync<Response<CheckOrderInfoResponse>>(client,
                 "https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo", new FormUrlEncodedContent(form),
@@ -509,7 +517,7 @@ namespace LFNet.TrainTicket
                 OrderPageUrl);
         }
 
-        public static async Task<Response<ConfirmSingleForQueueResponse>> ConfirmSingleForQueue(this Client client, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, string dynamicJsKey, string dynamicJsValue, string submitToken, string keyCheckIsChange, string leftTicket, string trainLocation)
+        public static async Task<Response<ConfirmSingleForQueueResponse>> ConfirmSingleForQueue(this Client client, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, InitDcResult initDcResult, string trainLocation)
         {
             string passengerTicketStr = "";
             string oldPassengerStr = "";
@@ -538,12 +546,12 @@ namespace LFNet.TrainTicket
                 {"oldPassengerStr",oldPassengerStr},
                 {"randCode",randCode},
                 {"purpose_codes","00"},
-                {"key_check_isChange",keyCheckIsChange},
-                {"leftTicket",leftTicket},
+                {"key_check_isChange",initDcResult.KeyCheckIsChange},
+                {"leftTicket",initDcResult.LeftTicketStr},
                 {"train_location",trainLocation},
                 {"dwAll","N"},
                 {"_json_att",""},
-                {"REPEAT_SUBMIT_TOKEN",submitToken},
+                {"REPEAT_SUBMIT_TOKEN",initDcResult.RepeatSubmitToken},
             };
             return await AjaxPostToJsonObjectAsync<Response<ConfirmSingleForQueueResponse>>(client,
                 "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue", new FormUrlEncodedContent(form),

@@ -59,9 +59,10 @@
   <ItemGroup>
     <Compile Include="Account.cs" />
     <Compile Include="ActionUrls.cs" />
+    <Compile Include="BLL\AccountInfo.cs" />
     <Compile Include="BLL\Client.cs" />
-    <Compile Include="ClientEventArgs.cs" />
-    <Compile Include="Cracker.cs" />
+    <Compile Include="BLL\ClientEventArgs.cs" />
+    <Compile Include="Common\Cracker.cs" />
     <Compile Include="Config\PayType.cs" />
     <Compile Include="DLL\DynamicJsResult.cs" />
     <Compile Include="Entity\CardType.cs" />
@@ -69,14 +70,14 @@
     <Compile Include="Config\BuyTicketConfig.cs" />
     <Compile Include="Config\OrderRequest.cs" />
     <Compile Include="Global.cs" />
-    <Compile Include="HttpMethod.cs" />
-    <Compile Include="HttpRequest.cs" />
+    <Compile Include="Common\HttpMethod.cs" />
+    <Compile Include="Common\HttpRequest.cs" />
     <Compile Include="DLL\InitDcResult.cs" />
     <Compile Include="DLL\InterfaceProvider.cs" />
     <Compile Include="Config\Passenger.cs" />
-    <Compile Include="JHttpRequest.cs" />
+    <Compile Include="Common\JHttpRequest.cs" />
     <Compile Include="DLL\LoginPageResult.cs" />
-    <Compile Include="Mp3.cs" />
+    <Compile Include="Common\Mp3.cs" />
     <Compile Include="DLL\PageResult.cs" />
     <Compile Include="Response\CheckOrderInfoResponse.cs" />
     <Compile Include="Response\CheckRandCodeAnsyn.cs" />
@@ -89,7 +90,7 @@
     <Compile Include="Response\QueryResponse.cs" />
     <Compile Include="Response\ResultOrderForDcQueueResponse.cs" />
     <Compile Include="Entity\GetPassengerDTOs.cs" />
-    <Compile Include="Entity\NormalPassenger.cs" />
+    <Compile Include="Entity\PassengerInfo.cs" />
     <Compile Include="Entity\resState.cs" />
     <Compile Include="Config\TrainItemInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -99,7 +100,7 @@
     <Compile Include="TextValue.cs" />
     <Compile Include="Entity\TicketType.cs" />
     <Compile Include="AutoVCodeType.cs" />
-    <Compile Include="TicketSetting.cs" />
+    <Compile Include="Config\TicketSetting.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Tools\VCodeForm.cs">
       <SubType>Form</SubType>
@@ -167,9 +168,7 @@
       <Name>LFNet.Net.Http</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Common\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

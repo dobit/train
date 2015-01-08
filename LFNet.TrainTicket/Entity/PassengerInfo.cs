@@ -1,6 +1,6 @@
 namespace LFNet.TrainTicket.RqEntity
 {
-    public class NormalPassenger
+    public class PassengerInfo
     {
         public string code { get; set; }
         public string passenger_name { get; set; }

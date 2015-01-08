@@ -185,7 +185,7 @@ namespace LFNet.TrainTicket
             try
             {
                 GetPassengerDTOs passengerJsonInfo = account.GetPassengers();
-                foreach (NormalPassenger jsonInfo in passengerJsonInfo.normal_passengers)
+                foreach (PassengerInfo jsonInfo in passengerJsonInfo.normal_passengers)
                 {
                     var find = Config.BuyTicketConfig.Instance.Passengers.Find(p => p.Name == jsonInfo.passenger_name);
                     if (find == null)
