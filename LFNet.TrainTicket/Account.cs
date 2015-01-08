@@ -62,10 +62,27 @@ namespace LFNet.TrainTicket
         }
 
         #endregion
+
+        #region Fields
+        /// <summary>
+        /// 停止状态
+        /// </summary>
         private bool _stop = false;
+
+        /// <summary>
+        /// 查询页面访问时间
+        /// </summary>
+        private DateTime _queryPageTime = DateTime.MinValue;
+        /// <summary>
+        /// 查询页面的动态js检测结果
+        /// </summary>
+        private DynamicJsResult _queryPageDynamicJsResult = null;
+        #endregion
+
+
         public string Username { get; private set; }
         public string Password { get; private set; }
-        //public AccountInfo AccountInfo { get { return Config.BuyTicketConfig.Instance.AccountInfo; } }
+      
         public WebProxy Proxy { get; set; }
 
         private CookieContainer _cookie = new CookieContainer();
@@ -91,6 +108,9 @@ namespace LFNet.TrainTicket
                 Proxy = new WebProxy(proxyIp, 443); //https代理
         }
 
+        /// <summary>
+        /// 停止执行
+        /// </summary>
         public void Stop()
         {
             _stop = true;
@@ -122,12 +142,12 @@ namespace LFNet.TrainTicket
                 return State.Login;
             }
         }
-        
+
         /// <summary>
         /// 登录
         /// </summary>
-        /// <param name="auto"></param>
-        public async void Login( bool auto=false)
+        /// <returns>登录时否成功</returns>
+        public async Task<bool> Login()
         {
             //打开登陆页面
             var loginPageResult = await this.GetLoginPageResult();
@@ -142,37 +162,32 @@ namespace LFNet.TrainTicket
             {
                 IsLogin = true;
                 Info("登录成功");
+                return true;
             }
             else
             {
                 Info(response.messages[0].ToString());
-                return;
+                return false;
             }
-
-
-           
         }
 
-        private DateTime _queryPageTime;
-        private DynamicJsResult _queryPageDynamicJsResult;
+       
 
         /// <summary>
         /// 查询
         /// </summary>
         public async void QueryLeftTicket()
         {
-            if (_queryPageDynamicJsResult == null || (DateTime.Now - _queryPageTime).TotalMinutes > 20)
-            {
-                //查询准备 打开查询页 获取页面动态js结果
-                string leftTicketContent = this.GetHttpClient(ActionUrls.InitMy12306PageUrl)
-                    .GetStringAsync(ActionUrls.LeftTicketUrl).Result;
-                Dictionary<string, string> dynamicJsAction = GetDynamicJsAction(leftTicketContent, ActionUrls.LeftTicketUrl);//获取动态js检测结果
+            OpenQueryPage();
+            //查询联系人
 
-                QueryDynamicJsActionResult = dynamicJsAction;
-            }
             //查询
-
+            
         }
+
+
+
+      
 
         /// <summary>
         /// 获取一个有效的验证码
@@ -205,99 +220,13 @@ namespace LFNet.TrainTicket
         }
 
 
-        public Dictionary<string, string> QueryDynamicJsActionResult { get; set; }
-        ///// <summary>
-        ///// 检查验证码
-        ///// </summary>
-        ///// <param name="randCode">验证码</param>
-        ///// <param name="randType">0=登陆，1下单</param>
-        ///// <param name="token">档randtype=2必须有</param>
-        ///// <returns></returns>
-        //public bool CheckRandCodeAnsyn(string randCode,int randType,string token)
-        //{
-        //    //randCode=6eed&rand=sjrand&randCode_validate=
-        //    //randCode=nsph&rand=randp&_json_att=&REPEAT_SUBMIT_TOKEN=c92104171aee0b7323c8e2466a9d3f8c
-        //    if (randType == 0)
-        //    {
-        //        return this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync(ActionUrls.CheckRandCodeAnsynUrl, new
-        //        {
-        //            randCode,
-        //            rand = "sjrand",
-        //            randCode_validate = ""
-        //        }.ToUrlEncodedContent())
-        //            .Result.Content.ReadAsStringAsync()
-        //            .Result.ToJsonObject<Response<CheckRandCodeAnsynResponse>>()
-        //            .data.result == "1";
-        //    }
-        //    else
-        //    {
-        //        return this.GetHttpClient(ActionUrls.LoginPageUrl).PostAsync(ActionUrls.CheckRandCodeAnsynUrl, new
-        //        {
-        //            randCode,
-        //            rand = "randp",
-        //            _json_att="",
-        //            REPEAT_SUBMIT_TOKEN=token
-        //        }.ToUrlEncodedContent())
-        //            .Result.Content.ReadAsStringAsync()
-        //            .Result.ToJsonObject<Response<CheckRandCodeAnsynResponse>>()
-        //            .data.result == "1";
-        //    }
-
-           
-        //}
-        /// <summary>
-        /// 页面动态js检查
-        /// </summary>
-        /// <returns></returns>
-        public  Dictionary<string, string> GetDynamicJsAction(string content, string pageUrl)
-        {
-            Regex jsUrlRegex = new Regex(@"<script src=""/otn/dynamicJs/(.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            
-            string jsurl = new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + jsUrlRegex.Match(content).Groups[1]).ToString();//jsUrlRegex.Replace(content, "$1")).ToString();
-            string jsContent = this.GetHttpClient(pageUrl).GetStringAsync(jsurl).Result;
-            System.Text.RegularExpressions.Regex jsregex = new Regex(@"(function\sbin216(.*?))function\saj()");
-            string js = jsregex.Match(jsContent).Groups[1].ToString();//.Replace(jsContent, "$1");
-            System.Text.RegularExpressions.Regex keyregex = new Regex(@"var\s*?key\s*?=[""']([A-Za-z0-9+/=]*?)[""'];");
-            string key = keyregex.Match(jsContent).Groups[1].ToString(); //Replace(jsContent, "$1");
-            int cnt = new Regex(@"value\+='1';").Matches(jsContent).Count;
-            string value = "";
-            for (int i = 0; i < cnt; i++)
-            {
-                value += "1";
-            }
-            value = Utils.ExcuteJScript(js + ";" + "encode32(bin216(Base32.encrypt('" + value + "', '" + key + "')));");
-
-            Dictionary<string, string> result = new Dictionary<string, string>()
-            {
-                {key,value},
-                {"myversion","undefined"}
-            };
-             Regex postUrlRegex = new Regex(@"/otn/dynamicJs/(.*?)'", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-             string postUrl = new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + postUrlRegex.Match(jsContent).Groups[1]).ToString();
-            HttpResponseMessage httpResponseMessage = this.GetHttpClient(pageUrl, true).PostAsync(postUrl, new StringContent("")).Result;
-            return result;
-           
-        }
-
-        
-
         /// <summary>
         /// 获取乘客信息
         /// </summary>
         /// <returns></returns>
-        public GetPassengerDTOs GetPassengers(string submitToken="")
+        public GetPassengerDTOs GetPassengers()
         {
-            HttpContent obj = new StringContent("");
-            if (submitToken != "")
-                obj = new
-                {
-                    _json_att = "",
-                    REPEAT_SUBMIT_TOKEN = submitToken
-                }.ToUrlEncodedContent();
-            Response<GetPassengerDTOs> response = this.GetHttpClient(ActionUrls.QueryPageUrl)
-                .PostAsync("https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs",obj).Result.Content.ReadAsStringAsync().Result.ToJsonObject<Response<GetPassengerDTOs>>();
-            return response.data;//.normal_passengers; //乘客信息
-
+            OpenQueryPage();
         }
 
 

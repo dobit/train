@@ -78,13 +78,27 @@ namespace LFNet.TrainTicket
         /// <summary>
         /// 获取登录页面内容
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<LoginPageResult> GetLoginPageResult(this Account account)
+        public static async Task<LoginPageResult> GetLoginPageResult(this Client client)
         {
-          string content=   await GetStringAsync(account, LoginPageUrl, TicketHomePage);
-          DynamicJsResult dynamicJsResult=  await GetDynamicJsAction(account, content, LoginPageUrl);
+          string content=   await GetStringAsync(client, LoginPageUrl, TicketHomePage);
+          DynamicJsResult dynamicJsResult=  await GetDynamicJsAction(client, content, LoginPageUrl);
             LoginPageResult result=new LoginPageResult();
+            result.DynamicJsResult = dynamicJsResult;
+            return result;
+        }
+
+        /// <summary>
+        /// 获取并分析查询页的
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns></returns>
+        public static async Task<PageResult> GetQueryPageResult(this Client client)
+        {
+            string content = await GetStringAsync(client, QueryPageUrl,InitMy12306PageUrl);
+            DynamicJsResult dynamicJsResult = await GetDynamicJsAction(client, content, QueryPageUrl);
+            var result = new PageResult();
             result.DynamicJsResult = dynamicJsResult;
             return result;
         }
@@ -92,10 +106,10 @@ namespace LFNet.TrainTicket
         /// <summary>
         /// 获取验证码
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="type">0=登录，1=下单</param>
         /// <returns></returns>
-        public static async Task<Image> GetRandCode(this Account account, int type = 0)
+        public static async Task<Image> GetRandCode(this Client client, int type = 0)
         {
             string url;
             if (type == 0)
@@ -110,7 +124,7 @@ namespace LFNet.TrainTicket
                       new Random().Next(10000000, 99999999) +
                       new Random().Next(10000000, 99999999);
             }
-            Stream stream = await GetHttpClient(account, LoginPageUrl).GetStreamAsync(url);
+            Stream stream = await GetHttpClient(client, LoginPageUrl).GetStreamAsync(url);
             return Image.FromStream(stream);
         }
 
@@ -121,14 +135,14 @@ namespace LFNet.TrainTicket
         /// <param name="randType">0=登陆，1下单</param>
         /// <param name="token">档randtype=2必须有</param>
         /// <returns></returns>
-        public static async Task<Response<CheckRandCodeAnsynResponse>> CheckRandCodeAnsyn(this Account account, string randCode, int randType, string token)
+        public static async Task<Response<CheckRandCodeAnsynResponse>> CheckRandCodeAnsyn(this Client client, string randCode, int randType, string token)
         {
             //randCode=6eed&rand=sjrand&randCode_validate=
             //randCode=nsph&rand=randp&_json_att=&REPEAT_SUBMIT_TOKEN=c92104171aee0b7323c8e2466a9d3f8c
             if (randType == 0)
             {
 
-                return await AjaxPostToJsonObjectAsync<Response<CheckRandCodeAnsynResponse>>(account, CheckRandCodeAnsynUrl, new
+                return await AjaxPostToJsonObjectAsync<Response<CheckRandCodeAnsynResponse>>(client, CheckRandCodeAnsynUrl, new
                 {
                     randCode,
                     rand = "sjrand",
@@ -138,7 +152,7 @@ namespace LFNet.TrainTicket
             }
             else
             {
-                return await AjaxPostToJsonObjectAsync<Response<CheckRandCodeAnsynResponse>>(account, CheckRandCodeAnsynUrl, new
+                return await AjaxPostToJsonObjectAsync<Response<CheckRandCodeAnsynResponse>>(client, CheckRandCodeAnsynUrl, new
                 {
                     randCode,
                     rand = "randp",
@@ -155,10 +169,10 @@ namespace LFNet.TrainTicket
         /// 检查服务器状态
         /// </summary>
         /// <returns></returns>
-        public static async Task<State> CheckState(this Account account)
+        public static async Task<State> CheckState(this Client client)
         {
             string url = "https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init";
-            string content = await GetHttpClient(account, QueryPageUrl).GetStringAsync(InitMy12306PageUrl);
+            string content = await GetHttpClient(client, QueryPageUrl).GetStringAsync(InitMy12306PageUrl);
             if (content.Contains("系统维护"))
             {
                 return State.Maintenance;
@@ -183,12 +197,12 @@ namespace LFNet.TrainTicket
         /// 页面动态js检查
         /// </summary>
         /// <returns></returns>
-        public static async Task<DynamicJsResult> GetDynamicJsAction(this Account account, string content, string pageUrl)
+        public static async Task<DynamicJsResult> GetDynamicJsAction(this Client client, string content, string pageUrl)
         {
             Regex jsUrlRegex = new Regex(@"<script src=""/otn/dynamicJs/(.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
             string jsurl = new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + jsUrlRegex.Match(content).Groups[1]).ToString();//jsUrlRegex.Replace(content, "$1")).ToString();
-            string jsContent = await GetHttpClient(account, pageUrl).GetStringAsync(jsurl);
+            string jsContent = await GetHttpClient(client, pageUrl).GetStringAsync(jsurl);
             Regex jsregex = new Regex(@"(function\sbin216(.*?))function\saj()");
             string js = jsregex.Match(jsContent).Groups[1].ToString();//.Replace(jsContent, "$1");
             Regex keyregex = new Regex(@"var\s*?key\s*?=[""']([A-Za-z0-9+/=]*?)[""'];");
@@ -209,7 +223,7 @@ namespace LFNet.TrainTicket
             Regex postUrlRegex = new Regex(@"/otn/dynamicJs/(.*?)'", RegexOptions.IgnoreCase | RegexOptions.Compiled);
             string postUrl = new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + postUrlRegex.Match(jsContent).Groups[1]).ToString();
 
-            Task<string> postDynamicJsStringAsync = PostDynamicJsStringAsync(account, LoginPageUrl, postUrl);
+            Task<string> postDynamicJsStringAsync = PostDynamicJsStringAsync(client, LoginPageUrl, postUrl);
             postDynamicJsStringAsync.DelayToRun(1000);
             return result;
 
@@ -217,17 +231,17 @@ namespace LFNet.TrainTicket
 
         
 
-        private static async Task<string> GetDynamicJsStringAsync(this Account account, string referrer, string dynamicJsUrl)
+        private static async Task<string> GetDynamicJsStringAsync(this Client client, string referrer, string dynamicJsUrl)
         {
-            return await  GetStringAsync(account,dynamicJsUrl, referrer);
+            return await  GetStringAsync(client,dynamicJsUrl, referrer);
         }
-        private static async Task<string> PostDynamicJsStringAsync(this Account account, string referrer, string dynamicJsUrl)
+        private static async Task<string> PostDynamicJsStringAsync(this Client client, string referrer, string dynamicJsUrl)
         {
-            return await PostToStringAsync(account, dynamicJsUrl, new StringContent(""), referrer);
+            return await PostToStringAsync(client, dynamicJsUrl, new StringContent(""), referrer);
         }
         #endregion
 
-        public static async Task<Response<LoginAysnSuggestResponse>> LoginAsynSuggest(this Account account,string userName,string password,string randCode, string key,string value)
+        public static async Task<Response<LoginAysnSuggestResponse>> LoginAsynSuggest(this Client client,string userName,string password,string randCode, string key,string value)
         {
             Dictionary<string, string> nameValues = new Dictionary<string, string>()
                 {
@@ -239,7 +253,7 @@ namespace LFNet.TrainTicket
                    {"myversion","undefined"	},  
                 };
             
-            return await AjaxPostToJsonObjectAsync<Response<LoginAysnSuggestResponse>>(account, LoginAysnSuggestUrl,
+            return await AjaxPostToJsonObjectAsync<Response<LoginAysnSuggestResponse>>(client, LoginAysnSuggestUrl,
                 new FormUrlEncodedContent(nameValues), LoginPageUrl);
         }
 
@@ -248,7 +262,7 @@ namespace LFNet.TrainTicket
         /// 获取乘客信息
         /// </summary>
         /// <returns></returns>
-        public static async Task<Response<GetPassengerDTOs>> GetPassengers(this Account account, string submitToken = "")
+        public static async Task<Response<GetPassengerDTOs>> GetPassengers(this Client client, string submitToken = "")
         {
             HttpContent obj = new StringContent("");
             if (submitToken != "")
@@ -257,7 +271,7 @@ namespace LFNet.TrainTicket
                     _json_att = "",
                     REPEAT_SUBMIT_TOKEN = submitToken
                 }.ToUrlEncodedContent();
-            return await AjaxPostToJsonObjectAsync<Response<GetPassengerDTOs>>(account, "https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs", obj, QueryPageUrl);
+            return await AjaxPostToJsonObjectAsync<Response<GetPassengerDTOs>>(client, "https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs", obj, QueryPageUrl);
 
         }
 
@@ -265,34 +279,51 @@ namespace LFNet.TrainTicket
         /// 检查用户状态
         /// </summary>
         /// <returns></returns>
-        public static async Task<Response<CheckUserResponse>> CheckUser(this Account account)
+        public static async Task<Response<CheckUserResponse>> CheckUser(this Client client)
         {
             return
                 await
-                    AjaxPostToJsonObjectAsync<Response<CheckUserResponse>>(account,
+                    AjaxPostToJsonObjectAsync<Response<CheckUserResponse>>(client,
                         "https://kyfw.12306.cn/otn/login/checkUser", new StringContent(""), QueryPageUrl);
 
         }
 
         /// <summary>
+        /// 查询日志
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="trainDate"></param>
+        /// <param name="fromStationTeleCode"></param>
+        /// <param name="toStationTeleCode"></param>
+        /// <param name="type"></param>
+        public static async void QueryTLog(this Client client, DateTime trainDate, string fromStationTeleCode,
+            string toStationTeleCode, int type = 0)
+        {
+            string purpose_codes = type == 0 ? "ADULT" : "STUDENT";
+            string url = string.Format("https://kyfw.12306.cn/otn/leftTicket/log?leftTicketDTO.train_date={0}&leftTicketDTO.from_station={1}&leftTicketDTO.to_station={2}&purpose_codes={3}"
+                , trainDate.ToString("yyyy-MM-dd"), fromStationTeleCode, toStationTeleCode, purpose_codes);
+
+          await   AjaxGetStringAsync(client, url, QueryPageUrl);
+        }
+
+        /// <summary>
         /// 查询列车信息
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="trainDate"></param>
         /// <param name="fromStationTeleCode"></param>
         /// <param name="toStationTeleCode"></param>
         /// <param name="type">0=成人,1=学生</param>
         /// <returns></returns>
-        public static async Task<Response<QueryResponse>> QueryTrainInfos(this Account account, DateTime trainDate, string fromStationTeleCode, string toStationTeleCode, int type = 0)
+        public static async Task<Response<QueryResponse>> QueryTrainInfos(this Client client, DateTime trainDate, string fromStationTeleCode, string toStationTeleCode, int type = 0)
         {
-            List<TrainItemInfo> list = new List<TrainItemInfo>();
-
+          
             //GET https://kyfw.12306.cn/otn/leftTicket/queryT?leftTicketDTO.train_date=2015-02-19&leftTicketDTO.from_station=BJP&leftTicketDTO.to_station=NCG&purpose_codes=ADULT HTTP/1.1
             string purpose_codes = type == 0 ? "ADULT" : "STUDENT";
             string url = string.Format("https://kyfw.12306.cn/otn/leftTicket/queryT?leftTicketDTO.train_date={0}&leftTicketDTO.from_station={1}&leftTicketDTO.to_station={2}&purpose_codes={3}"
                 , trainDate.ToString("yyyy-MM-dd"), fromStationTeleCode, toStationTeleCode, purpose_codes);
 
-            return await AjaxGetToJsonObjectAsync<Response<QueryResponse>>(account, url, QueryPageUrl);
+            return await AjaxGetToJsonObjectAsync<Response<QueryResponse>>(client, url, QueryPageUrl);
 
         }
 
@@ -306,7 +337,7 @@ namespace LFNet.TrainTicket
         /// <param name="toStationTeleCode"></param>
         /// <param name="type">0=成人,1=学生</param>
         /// <returns>得到页面的表单信息</returns>
-        public static async Task<Response<string>> SubmitOrderRequest(this Account account, string secretStr, string dynamicJsKey, string dynamicJsValue, DateTime trainDate, DateTime backTrainDate, string fromStationTeleCode, string toStationTeleCode, int type = 0)
+        public static async Task<Response<string>> SubmitOrderRequest(this Client client, string secretStr, string dynamicJsKey, string dynamicJsValue, DateTime trainDate, DateTime backTrainDate, string fromStationTeleCode, string toStationTeleCode, int type = 0)
         {
 
             var config = ConfigFileManager.GetConfig<BuyTicketConfig>();
@@ -335,19 +366,19 @@ namespace LFNet.TrainTicket
              * current_captcha_type=C
              * */
             DateTime expires = DateTime.Now.AddDays(365);
-            var accountCollection = new CookieCollection()
+            var clientCollection = new CookieCollection()
             {
-                //new account("_jc_save_czxxcx_toStation",""),
-                //new account("_jc_save_czxxcx_fromDate","2014-12-25"),
+                //new client("_jc_save_czxxcx_toStation",""),
+                //new client("_jc_save_czxxcx_fromDate","2014-12-25"),
                 new Cookie("_jc_save_fromStation",Common.HtmlUtil.UrlEncode(config.OrderRequest.FromStationTelecodeName+","+config.OrderRequest.FromStationTelecode)){Expires = expires },
                 new Cookie("_jc_save_toStation",Common.HtmlUtil.UrlEncode(config.OrderRequest.ToStationTelecodeName+","+config.OrderRequest.ToStationTelecode)){Expires = expires },
                 new Cookie("_jc_save_fromDate",config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
                 new Cookie("_jc_save_toDate",config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
                 new Cookie("_jc_save_wfdc_flag","dc"){Expires = expires },
-                // new account("current_captcha_type","C"){Expires = expires },
+                // new client("current_captcha_type","C"){Expires = expires },
             };
-            account.Cookie.Add(new Uri(ActionUrls.TicketHomePage), accountCollection);
-            return await AjaxPostToJsonObjectAsync<Response<string>>(account, "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest", new FormUrlEncodedContent(newforms), QueryPageUrl);
+            client.Cookie.Add(new Uri(ActionUrls.TicketHomePage), clientCollection);
+            return await AjaxPostToJsonObjectAsync<Response<string>>(client, "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest", new FormUrlEncodedContent(newforms), QueryPageUrl);
 
             ////转到订单页面
             //string content = GetHttpClient(ActionUrls.QueryPageUrl).PostAsync("https://kyfw.12306.cn/otn/confirmPassenger/initDc", new UrlEncodedContent(new { _json_att = "" })).Result.Content.ReadAsStringAsync().Result;
@@ -369,15 +400,15 @@ namespace LFNet.TrainTicket
         /// <summary>
         /// 获取订单提交页面内容
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<InitDcResult> GetInitDc(this Account account)
+        public static async Task<InitDcResult> GetInitDc(this Client client)
         {
           
             string content=await
-                    AjaxPostToStringAsync(account, OrderPageUrl,
+                    AjaxPostToStringAsync(client, OrderPageUrl,
                         new UrlEncodedContent(new { _json_att = "" }), QueryPageUrl);
-            DynamicJsResult dynamicJsResult = await GetDynamicJsAction(account, content, OrderPageUrl);
+            DynamicJsResult dynamicJsResult = await GetDynamicJsAction(client, content, OrderPageUrl);
             InitDcResult result= new InitDcResult() {DynamicJsResult = dynamicJsResult};
 
 
@@ -387,9 +418,9 @@ namespace LFNet.TrainTicket
         /// <summary>
         /// 检查订单信息
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<Response<CheckOrderInfoResponse>> CheckOrderInfoAsync(this Account account, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, string dynamicJsKey, string dynamicJsValue, string submitToken)
+        public static async Task<Response<CheckOrderInfoResponse>> CheckOrderInfoAsync(this Client client, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, string dynamicJsKey, string dynamicJsValue, string submitToken)
         {
             /*
              * cancel_flag	2
@@ -437,13 +468,13 @@ namespace LFNet.TrainTicket
                 {"_json_att",""},
                 {"REPEAT_SUBMIT_TOKEN",submitToken},
             };
-            return await AjaxPostToJsonObjectAsync<Response<CheckOrderInfoResponse>>(account,
+            return await AjaxPostToJsonObjectAsync<Response<CheckOrderInfoResponse>>(client,
                 "https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo", new FormUrlEncodedContent(form),
                 OrderPageUrl);
         }
 
 
-        public static async Task<Response<GetQueueCountResponse>> GetQueueCount(this Account account,DateTime trainDate, TrainItemInfo trainItemInfo, string leftTicket, string submitToken,SeatType seatType)
+        public static async Task<Response<GetQueueCountResponse>> GetQueueCount(this Client client,DateTime trainDate, TrainItemInfo trainItemInfo, string leftTicket, string submitToken,SeatType seatType)
         {
 
             /* train_date	Thu Feb 19 2015 00:00:00 GMT+0800 (中国标准时间)
@@ -473,12 +504,12 @@ namespace LFNet.TrainTicket
 
 
             };
-            return await AjaxPostToJsonObjectAsync<Response<GetQueueCountResponse>>(account,
+            return await AjaxPostToJsonObjectAsync<Response<GetQueueCountResponse>>(client,
                 "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount", new FormUrlEncodedContent(form),
                 OrderPageUrl);
         }
 
-        public static async Task<Response<ConfirmSingleForQueueResponse>> ConfirmSingleForQueue(this Account account, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, string dynamicJsKey, string dynamicJsValue, string submitToken, string keyCheckIsChange, string leftTicket, string trainLocation)
+        public static async Task<Response<ConfirmSingleForQueueResponse>> ConfirmSingleForQueue(this Client client, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, string dynamicJsKey, string dynamicJsValue, string submitToken, string keyCheckIsChange, string leftTicket, string trainLocation)
         {
             string passengerTicketStr = "";
             string oldPassengerStr = "";
@@ -514,7 +545,7 @@ namespace LFNet.TrainTicket
                 {"_json_att",""},
                 {"REPEAT_SUBMIT_TOKEN",submitToken},
             };
-            return await AjaxPostToJsonObjectAsync<Response<ConfirmSingleForQueueResponse>>(account,
+            return await AjaxPostToJsonObjectAsync<Response<ConfirmSingleForQueueResponse>>(client,
                 "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue", new FormUrlEncodedContent(form),
                 OrderPageUrl);
         }
@@ -524,10 +555,10 @@ namespace LFNet.TrainTicket
         /// </summary>
         /// <param name="?"></param>
         /// <returns></returns>
-        public static async Task<Response<QueryOrderWaitTimeResponse>> QueryOrderWaitTime(this Account account, string submitToken)
+        public static async Task<Response<QueryOrderWaitTimeResponse>> QueryOrderWaitTime(this Client client, string submitToken)
         {
             
-            return await AjaxGetToJsonObjectAsync<Response<QueryOrderWaitTimeResponse>>(account,
+            return await AjaxGetToJsonObjectAsync<Response<QueryOrderWaitTimeResponse>>(client,
                 "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?"+new UrlEncodedContent(new
                 {
                     random=new Random().Next(10000000, 99999999) +
@@ -545,7 +576,7 @@ namespace LFNet.TrainTicket
         /// <typeparam name="ResultOrderForDcQueueResponse"></typeparam>
         /// <param name="?"></param>
         /// <returns></returns>
-        public static async Task<Response<ResultOrderForDcQueueResponse>> ResultOrderForDcQueue(this Account account, string orderId, string submitToken)
+        public static async Task<Response<ResultOrderForDcQueueResponse>> ResultOrderForDcQueue(this Client client, string orderId, string submitToken)
         {
             Dictionary<string, string> form = new Dictionary<string, string>()
             {    
@@ -555,7 +586,7 @@ namespace LFNet.TrainTicket
             };
 
 
-            return await AjaxPostToJsonObjectAsync<Response<ResultOrderForDcQueueResponse>>(account,
+            return await AjaxPostToJsonObjectAsync<Response<ResultOrderForDcQueueResponse>>(client,
                 "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue", new FormUrlEncodedContent(form),
                 OrderPageUrl);
         }
@@ -566,116 +597,116 @@ namespace LFNet.TrainTicket
         /// <summary>
         /// 获取一个地址的内容
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="url"></param>
         /// <param name="refererUrl"></param>
         /// <returns></returns>
-        public static async Task<string> GetStringAsync(this Account account, string url, string refererUrl = "")
+        public static async Task<string> GetStringAsync(this Client client, string url, string refererUrl = "")
         {
-            return await GetHttpClient(account, refererUrl).GetStringAsync(url);
+            return await GetHttpClient(client, refererUrl).GetStringAsync(url);
         }
         /// <summary>
         /// 获取一个地址的内容
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="url"></param>
         /// <param name="refererUrl"></param>
         /// <returns></returns>
-        public static async Task<T> GetToJsonObjectAsync<T>(this Account account, string url, string refererUrl = "")
+        public static async Task<T> GetToJsonObjectAsync<T>(this Client client, string url, string refererUrl = "")
         {
-            string str = await GetStringAsync(account, url, refererUrl);
+            string str = await GetStringAsync(client, url, refererUrl);
             return str.ToJsonObject<T>();
         }
         /// <summary>
         /// 通过post返回string
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="url"></param>
         /// <param name="refererUrl"></param>
         /// <param name="content"></param>
         /// <returns></returns>
-        public static async Task<string> GetStringPostAsync(this Account account, string url, HttpContent content = null, string refererUrl = "")
+        public static async Task<string> GetStringPostAsync(this Client client, string url, HttpContent content = null, string refererUrl = "")
         {
-            HttpResponseMessage response = await GetHttpClient(account, refererUrl).PostAsync(url, content);
+            HttpResponseMessage response = await GetHttpClient(client, refererUrl).PostAsync(url, content);
             return await response.Content.ReadAsStringAsync();
         }
         /// <summary>
         /// 获取一个地址的内容
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="url"></param>
         /// <param name="refererUrl"></param>
         /// <returns></returns>
-        public static async Task<string> AjaxGetStringAsync(this Account account, string url, string refererUrl = "")
+        public static async Task<string> AjaxGetStringAsync(this Client client, string url, string refererUrl = "")
         {
-            return await GetHttpClient(account, refererUrl, true).GetStringAsync(url);
+            return await GetHttpClient(client, refererUrl, true).GetStringAsync(url);
         }
         /// <summary>
         /// 获取一个地址的内容
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="url"></param>
         /// <param name="refererUrl"></param>
         /// <returns></returns>
-        public static async Task<T> AjaxGetToJsonObjectAsync<T>(this Account account, string url, string refererUrl = "")
+        public static async Task<T> AjaxGetToJsonObjectAsync<T>(this Client client, string url, string refererUrl = "")
         {
-            string str = await GetHttpClient(account, refererUrl, true).GetStringAsync(url);
+            string str = await GetHttpClient(client, refererUrl, true).GetStringAsync(url);
             return str.ToJsonObject<T>();
         }
         /// <summary>
         /// 通过post返回string
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="url"></param>
         /// <param name="refererUrl"></param>
         /// <param name="content"></param>
         /// <returns></returns>
-        public static async Task<HttpResponseMessage> AjaxPostAsync(this Account account, string url, HttpContent content = null, string refererUrl = "")
+        public static async Task<HttpResponseMessage> AjaxPostAsync(this Client client, string url, HttpContent content = null, string refererUrl = "")
         {
-            return await GetHttpClient(account, refererUrl, true).PostAsync(url, content);
+            return await GetHttpClient(client, refererUrl, true).PostAsync(url, content);
 
         }
         /// <summary>
         /// 通过post返回string
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="client"></param>
         /// <param name="url"></param>
         /// <param name="refererUrl"></param>
         /// <param name="content"></param>
         /// <returns></returns>
-        public static async Task<string> AjaxPostToStringAsync(this Account account, string url, HttpContent content = null, string refererUrl = "")
+        public static async Task<string> AjaxPostToStringAsync(this Client client, string url, HttpContent content = null, string refererUrl = "")
         {
-            HttpResponseMessage response = await AjaxPostAsync(account, url, content, refererUrl);
+            HttpResponseMessage response = await AjaxPostAsync(client, url, content, refererUrl);
             return await response.Content.ReadAsStringAsync();
         }
 
-        public static async Task<T> AjaxPostToJsonObjectAsync<T>(this Account account, string url, HttpContent content = null, string refererUrl = "")
+        public static async Task<T> AjaxPostToJsonObjectAsync<T>(this Client client, string url, HttpContent content = null, string refererUrl = "")
         {
-            string str = await AjaxPostToStringAsync(account, url, content, refererUrl);
+            string str = await AjaxPostToStringAsync(client, url, content, refererUrl);
             return str.ToJsonObject<T>();
         }
 
-        public static async Task<T> PostToJsonObjectAsync<T>(this Account account, string url, HttpContent content = null, string refererUrl = "")
+        public static async Task<T> PostToJsonObjectAsync<T>(this Client client, string url, HttpContent content = null, string refererUrl = "")
         {
-            string str = await PostToStringAsync(account, url, content, refererUrl);
+            string str = await PostToStringAsync(client, url, content, refererUrl);
             return str.ToJsonObject<T>();
         }
 
-        private static async Task<string> PostToStringAsync(this Account account, string url, HttpContent content, string refererUrl)
+        private static async Task<string> PostToStringAsync(this Client client, string url, HttpContent content, string refererUrl)
         {
-            HttpResponseMessage response = await PostAsync(account, url, content, refererUrl);
+            HttpResponseMessage response = await PostAsync(client, url, content, refererUrl);
             return await response.Content.ReadAsStringAsync();
         }
 
-        private static async Task<HttpResponseMessage> PostAsync(this Account account, string url, HttpContent content, string refererUrl)
+        private static async Task<HttpResponseMessage> PostAsync(this Client client, string url, HttpContent content, string refererUrl)
         {
-            return await GetHttpClient(account, refererUrl).PostAsync(url, content);
+            return await GetHttpClient(client, refererUrl).PostAsync(url, content);
         }
 
         public const string UserAgent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
-        private static LFNet.Net.Http.JHttpClient GetHttpClient(this Account account, string referrer, bool isAjax = false)
+        private static LFNet.Net.Http.JHttpClient GetHttpClient(this Client client, string referrer, bool isAjax = false)
         {
-            Net.Http.JHttpClient httpClient = HttpClientFactory.Create(referrer, UserAgent, account.Cookie, true);
+            Net.Http.JHttpClient httpClient = HttpClientFactory.Create(referrer, UserAgent, client.Cookie, true);
             httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
             httpClient.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.8");
             httpClient.DefaultRequestHeaders.Add("Origin", " https://kyfw.12306.cn");
@@ -695,8 +726,13 @@ namespace LFNet.TrainTicket
         public string Value { get; set; }
     }
 
-    public class LoginPageResult
+    public class LoginPageResult : PageResult
     {
+    }
+
+    public class PageResult
+    {
+
         public DynamicJsResult DynamicJsResult { get; set; }
     }
 }

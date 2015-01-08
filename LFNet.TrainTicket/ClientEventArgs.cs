@@ -12,4 +12,12 @@ namespace LFNet.TrainTicket
             Message = message;
         }
     }
+
+    public enum EventType
+    {
+        Info,
+        warn,
+        Error,
+        
+    }
 }

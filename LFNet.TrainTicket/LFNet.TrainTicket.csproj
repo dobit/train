@@ -59,10 +59,10 @@
   <ItemGroup>
     <Compile Include="Account.cs" />
     <Compile Include="ActionUrls.cs" />
+    <Compile Include="Client.cs" />
     <Compile Include="ClientEventArgs.cs" />
     <Compile Include="Cracker.cs" />
     <Compile Include="Config\PayType.cs" />
-    <Compile Include="DataProvider.cs" />
     <Compile Include="Entity\CardType.cs" />
     <Compile Include="Config\BuyMode.cs" />
     <Compile Include="Config\BuyTicketConfig.cs" />
@@ -76,7 +76,6 @@
     <Compile Include="Config\Passenger.cs" />
     <Compile Include="JHttpRequest.cs" />
     <Compile Include="Mp3.cs" />
-    <Compile Include="Request\CheckRandCodeAnsynRequest.cs" />
     <Compile Include="Response\CheckOrderInfoResponse.cs" />
     <Compile Include="Response\CheckRandCodeAnsyn.cs" />
     <Compile Include="Response\CheckResponse.cs" />
@@ -87,14 +86,12 @@
     <Compile Include="Response\QueryOrderWaitTimeResponse.cs" />
     <Compile Include="Response\QueryResponse.cs" />
     <Compile Include="Response\ResultOrderForDcQueueResponse.cs" />
-    <Compile Include="RqEntity\resState.cs" />
-    <Compile Include="RqEntity\LoginAysnSuggestInfo.cs" />
-    <Compile Include="LoginQuery.cs" />
-    <Compile Include="QueryTrainInfo.cs" />
+    <Compile Include="Entity\GetPassengerDTOs.cs" />
+    <Compile Include="Entity\NormalPassenger.cs" />
+    <Compile Include="Entity\resState.cs" />
     <Compile Include="Config\TrainItemInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RqEntity\PassengerInfo.cs" />
-    <Compile Include="RqEntity\ResYpInfo.cs" />
+    <Compile Include="Entity\ResYpInfo.cs" />
     <Compile Include="Entity\SeatType.cs" />
     <Compile Include="Entity\StationInfo.cs" />
     <Compile Include="TextValue.cs" />
@@ -106,7 +103,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Entity\SeatDetailType.cs" />
-    <Compile Include="RqEntity\WaitResponse.cs" />
+    <Compile Include="Entity\WaitResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Response\resultOrderForDcQueue.json" />
