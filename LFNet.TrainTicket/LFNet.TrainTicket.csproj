@@ -59,10 +59,11 @@
   <ItemGroup>
     <Compile Include="Account.cs" />
     <Compile Include="ActionUrls.cs" />
-    <Compile Include="Client.cs" />
+    <Compile Include="BLL\Client.cs" />
     <Compile Include="ClientEventArgs.cs" />
     <Compile Include="Cracker.cs" />
     <Compile Include="Config\PayType.cs" />
+    <Compile Include="DLL\DynamicJsResult.cs" />
     <Compile Include="Entity\CardType.cs" />
     <Compile Include="Config\BuyMode.cs" />
     <Compile Include="Config\BuyTicketConfig.cs" />
@@ -70,12 +71,13 @@
     <Compile Include="Global.cs" />
     <Compile Include="HttpMethod.cs" />
     <Compile Include="HttpRequest.cs" />
-    <Compile Include="InitDcResult.cs" />
-    <Compile Include="InterfaceProvider.cs" />
-    <Compile Include="IQuery.cs" />
+    <Compile Include="DLL\InitDcResult.cs" />
+    <Compile Include="DLL\InterfaceProvider.cs" />
     <Compile Include="Config\Passenger.cs" />
     <Compile Include="JHttpRequest.cs" />
+    <Compile Include="DLL\LoginPageResult.cs" />
     <Compile Include="Mp3.cs" />
+    <Compile Include="DLL\PageResult.cs" />
     <Compile Include="Response\CheckOrderInfoResponse.cs" />
     <Compile Include="Response\CheckRandCodeAnsyn.cs" />
     <Compile Include="Response\CheckResponse.cs" />
@@ -99,7 +101,7 @@
     <Compile Include="AutoVCodeType.cs" />
     <Compile Include="TicketSetting.cs" />
     <Compile Include="Utils.cs" />
-    <Compile Include="VCodeForm.cs">
+    <Compile Include="Tools\VCodeForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Entity\SeatDetailType.cs" />
@@ -119,7 +121,7 @@
     <None Include="sn.snk" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="VCodeForm.resx">
+    <EmbeddedResource Include="Tools\VCodeForm.resx">
       <DependentUpon>VCodeForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
@@ -152,8 +154,8 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="1.js" />
-    <Content Include="JavaScript1.js" />
+    <Content Include="Resources\1.js" />
+    <Content Include="Resources\JavaScript1.js" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Common\LFNet.Common\LFNet.Common.csproj">
@@ -164,6 +166,9 @@
       <Project>{173a16b4-448e-4752-b944-97fc9eb84eac}</Project>
       <Name>LFNet.Net.Http</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Common\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
