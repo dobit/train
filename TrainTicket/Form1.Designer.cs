@@ -34,6 +34,7 @@
             this.webBrowser1 = new System.Windows.Forms.WebBrowser();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.tbUsername = new System.Windows.Forms.TextBox();
+            this.accountInfoBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.tbPassword = new System.Windows.Forms.TextBox();
             this.btnOpenExplorer = new System.Windows.Forms.Button();
             this.cbForce = new System.Windows.Forms.CheckBox();
@@ -48,8 +49,6 @@
             this.label11 = new System.Windows.Forms.Label();
             this.nudDelay = new System.Windows.Forms.NumericUpDown();
             this.label10 = new System.Windows.Forms.Label();
-            this.tbToStation = new LFNet.TrainTicket.Controls.StationCtrl();
-            this.tbFromStation = new LFNet.TrainTicket.Controls.StationCtrl();
             this.passengersSetCtrl3 = new LFNet.TrainTicket.Controls.PassengersSetCtrl();
             this.label5 = new System.Windows.Forms.Label();
             this.btnStop = new System.Windows.Forms.Button();
@@ -74,8 +73,10 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.关于AToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.axWindowsMediaPlayer1 = new AxWMPLib.AxWindowsMediaPlayer();
-            this.accountInfoBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.FromStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
+            this.ToStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
             this.adPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -88,7 +89,6 @@
             this.groupBox2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.axWindowsMediaPlayer1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // adPanel
@@ -117,6 +117,10 @@
             this.tbUsername.Size = new System.Drawing.Size(191, 21);
             this.tbUsername.TabIndex = 9;
             this.toolTip1.SetToolTip(this.tbUsername, "登陆用的用户名");
+            // 
+            // accountInfoBindingSource
+            // 
+            this.accountInfoBindingSource.DataSource = typeof(LFNet.TrainTicket.Entity.AccountInfo);
             // 
             // tbPassword
             // 
@@ -210,14 +214,14 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.ToStationCtrl);
+            this.groupBox1.Controls.Add(this.FromStationCtrl);
             this.groupBox1.Controls.Add(this.cbAutoVCode);
             this.groupBox1.Controls.Add(this.cbShowRealYp);
             this.groupBox1.Controls.Add(this.cbForce);
             this.groupBox1.Controls.Add(this.label11);
             this.groupBox1.Controls.Add(this.nudDelay);
             this.groupBox1.Controls.Add(this.label10);
-            this.groupBox1.Controls.Add(this.tbToStation);
-            this.groupBox1.Controls.Add(this.tbFromStation);
             this.groupBox1.Controls.Add(this.passengersSetCtrl3);
             this.groupBox1.Controls.Add(this.btnOpenExplorer);
             this.groupBox1.Controls.Add(this.label5);
@@ -304,28 +308,6 @@
             this.label10.TabIndex = 40;
             this.label10.Text = "刷新间隔:";
             // 
-            // tbToStation
-            // 
-            this.tbToStation.AutoSize = true;
-            this.tbToStation.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "ToStationTeleCode", true));
-            this.tbToStation.Location = new System.Drawing.Point(286, 24);
-            this.tbToStation.Margin = new System.Windows.Forms.Padding(4);
-            this.tbToStation.Name = "tbToStation";
-            this.tbToStation.Size = new System.Drawing.Size(124, 23);
-            this.tbToStation.TabIndex = 32;
-            this.tbToStation.Value = "";
-            // 
-            // tbFromStation
-            // 
-            this.tbFromStation.AutoSize = true;
-            this.tbFromStation.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "FromStationTeleCode", true));
-            this.tbFromStation.Location = new System.Drawing.Point(82, 24);
-            this.tbFromStation.Margin = new System.Windows.Forms.Padding(4);
-            this.tbFromStation.Name = "tbFromStation";
-            this.tbFromStation.Size = new System.Drawing.Size(124, 23);
-            this.tbFromStation.TabIndex = 31;
-            this.tbFromStation.Value = "";
-            // 
             // passengersSetCtrl3
             // 
             this.passengersSetCtrl3.Location = new System.Drawing.Point(84, 91);
@@ -406,7 +388,6 @@
             // 
             // tbTrainclass
             // 
-           
             this.tbTrainclass.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "TrainClass", true));
             this.tbTrainclass.Location = new System.Drawing.Point(243, 49);
             this.tbTrainclass.Margin = new System.Windows.Forms.Padding(4);
@@ -563,9 +544,23 @@
             this.axWindowsMediaPlayer1.TabIndex = 31;
             this.axWindowsMediaPlayer1.Visible = false;
             // 
-            // accountInfoBindingSource
+            // FromStationCtrl
             // 
-            this.accountInfoBindingSource.DataSource = typeof(LFNet.TrainTicket.Entity.AccountInfo);
+            this.FromStationCtrl.AutoSize = true;
+            this.FromStationCtrl.Location = new System.Drawing.Point(80, 24);
+            this.FromStationCtrl.Name = "FromStationCtrl";
+            this.FromStationCtrl.Size = new System.Drawing.Size(124, 23);
+            this.FromStationCtrl.TabIndex = 47;
+            this.FromStationCtrl.Value = "VAP";
+            // 
+            // ToStationCtrl
+            // 
+            this.ToStationCtrl.AutoSize = true;
+            this.ToStationCtrl.Location = new System.Drawing.Point(276, 24);
+            this.ToStationCtrl.Name = "ToStationCtrl";
+            this.ToStationCtrl.Size = new System.Drawing.Size(124, 23);
+            this.ToStationCtrl.TabIndex = 48;
+            this.ToStationCtrl.Value = "VAP";
             // 
             // Form1
             // 
@@ -583,6 +578,7 @@
             this.Name = "Form1";
             this.Text = "自动购票程序                  作者：dobit QQ:156798087";
             this.adPanel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).EndInit();
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -598,7 +594,6 @@
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.axWindowsMediaPlayer1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -652,6 +647,8 @@
         private System.Windows.Forms.CheckBox cbAutoVCode;
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.BindingSource accountInfoBindingSource;
+        private Controls.StationCtrl ToStationCtrl;
+        private Controls.StationCtrl FromStationCtrl;
     }
 }
 

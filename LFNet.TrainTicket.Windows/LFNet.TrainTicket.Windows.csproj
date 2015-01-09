@@ -131,6 +131,10 @@
       <Project>{00f65e3b-b7ad-42f2-a398-56d5cddfe125}</Project>
       <Name>LFNet.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LFNet.Net.Http\LFNet.Net.Http.csproj">
+      <Project>{173a16b4-448e-4752-b944-97fc9eb84eac}</Project>
+      <Name>LFNet.Net.Http</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LFNet.TrainTicket\LFNet.TrainTicket.csproj">
       <Project>{898346e0-d427-4976-a13c-1bd6156aef91}</Project>
       <Name>LFNet.TrainTicket</Name>
