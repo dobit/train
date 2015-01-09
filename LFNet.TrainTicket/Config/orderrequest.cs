@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using LFNet.TrainTicket.Entity;
 
 namespace LFNet.TrainTicket.Config
 {

@@ -1,4 +1,6 @@
-﻿namespace LFNet.TrainTicket.Controls
+﻿using LFNet.TrainTicket.Entity;
+
+namespace LFNet.TrainTicket.Controls
 {
     partial class PassengersSetCtrl
     {
@@ -188,7 +190,7 @@
             // 
             // passengerBindingSource
             // 
-            this.passengerBindingSource.DataSource = typeof(LFNet.TrainTicket.Config.Passenger);
+            this.passengerBindingSource.DataSource = typeof(Passenger);
             // 
             // PassengersSetCtrl
             // 

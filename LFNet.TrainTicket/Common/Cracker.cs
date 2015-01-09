@@ -2,9 +2,8 @@
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
-using System.Runtime.InteropServices;
 
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.Common
 {
     public class Cracker
     {

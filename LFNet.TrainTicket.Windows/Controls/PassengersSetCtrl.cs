@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using LFNet.TrainTicket.Config;
+using LFNet.TrainTicket.Entity;
 
 namespace LFNet.TrainTicket.Controls
 {
@@ -23,17 +24,27 @@ namespace LFNet.TrainTicket.Controls
 
         public void Reset()
         {
-            listView1.Items.Clear();
-            foreach (Passenger passenger in Config.BuyTicketConfig.Instance.Passengers)
+            try
             {
-                 ListViewItem listViewItem=new ListViewItem();
-                listViewItem.Tag = passenger;
-                listViewItem.Checked = passenger.Checked;
-                
-                listViewItem.SubItems.AddRange(new string[] { passenger.Name, passenger.CardType.ToString(), passenger.CardNo, passenger.MobileNo.ToString(),passenger.SeatDetailType.ToString() });
-                 listView1.Items.Add(listViewItem);
+                listView1.Items.Clear();
+                foreach (Passenger passenger in Config.BuyTicketConfig.Instance.Passengers)
+                {
+                    ListViewItem listViewItem = new ListViewItem();
+                    listViewItem.Tag = passenger;
+                    listViewItem.Checked = passenger.Checked;
+
+                    listViewItem.SubItems.AddRange(new string[]
+                    {
+                        passenger.Name, passenger.CardType.ToString(), passenger.CardNo, passenger.MobileNo.ToString(),
+                        passenger.SeatDetailType.ToString()
+                    });
+                    listView1.Items.Add(listViewItem);
+                }
             }
-           
+            catch (Exception exception)
+            {
+                
+            }
         }
 
         private void listView1_ItemChecked(object sender, ItemCheckedEventArgs e)

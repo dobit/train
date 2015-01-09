@@ -1,15 +1,16 @@
 using System;
-
-namespace LFNet.TrainTicket
+using System.Xml.Serialization;
+namespace LFNet.TrainTicket.Entity
 {
     /// <summary>
     /// 用户账户信息
     /// </summary>
+    [Serializable]
     public class AccountInfo
     {
         private DateTime _backTrainDate;
-        public string Username { get; private set; }
-        public string Password { get; private set; }
+        public string Username { get;  set; }
+        public string Password { get;  set; }
         /// <summary>
         /// 上车日期
         /// </summary>

@@ -2,12 +2,12 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.Common
 {
     /// <summary>
     /// 用Win32Api实现的媒体播放类.支持Mp3,wma,wmv
     /// </summary>
-   public class Mp3
+    public class Mp3
     {
         public Mp3()
         {
@@ -131,21 +131,22 @@ namespace LFNet.TrainTicket
             }
         }
     }
-}
-public class ApiClass
-{
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-    public static extern int GetShortPathName(
-     string lpszLongPath,
-     string shortFile,
-     int cchBuffer
-    );
 
-    [DllImport("winmm.dll", EntryPoint = "mciSendString", CharSet = CharSet.Auto)]
-    public static extern int mciSendString(
-     string lpstrCommand,
-     string lpstrReturnString,
-     int uReturnLength,
-     int hwndCallback
-    );
+    public class ApiClass
+    {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern int GetShortPathName(
+            string lpszLongPath,
+            string shortFile,
+            int cchBuffer
+            );
+
+        [DllImport("winmm.dll", EntryPoint = "mciSendString", CharSet = CharSet.Auto)]
+        public static extern int mciSendString(
+            string lpstrCommand,
+            string lpstrReturnString,
+            int uReturnLength,
+            int hwndCallback
+            );
+    }
 }

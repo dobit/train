@@ -1,5 +1,7 @@
 using System;
 using System.ComponentModel;
+using LFNet.Common;
+using LFNet.TrainTicket.Entity;
 
 namespace LFNet.TrainTicket.Config
 {
@@ -198,8 +200,8 @@ namespace LFNet.TrainTicket.Config
                     }
                     catch (Exception ex)
                     {
-                        Common.LogUtil.Log(ex);
-                        Common.LogUtil.Log(lishi);
+                        LogUtil.Log(ex);
+                        LogUtil.Log(lishi);
                         return new TimeSpan(1,0,1);
                     }
                     

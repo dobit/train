@@ -1,4 +1,4 @@
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.BLL
 {
     /// <summary>
     /// 客户端事件
@@ -12,7 +12,20 @@ namespace LFNet.TrainTicket
             Message = message;
         }
     }
+    /// <summary>
+    /// 客户端事件
+    /// </summary>
+    public class ClientEventArgs<T> : System.EventArgs
+    {
 
+
+        public T State { get; private set; }
+
+        public ClientEventArgs(T state)
+        {
+            this.State = state;
+        }
+    }
     public enum EventType
     {
         Info,

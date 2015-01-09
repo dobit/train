@@ -1,4 +1,6 @@
-﻿namespace LFNet.TrainTicket
+﻿using LFNet.TrainTicket.Entity;
+
+namespace LFNet.TrainTicket
 {
     partial class PassengerForm
     {
@@ -49,7 +51,7 @@
             // 
             // passengerBindingSource
             // 
-            this.passengerBindingSource.DataSource = typeof(LFNet.TrainTicket.Config.Passenger);
+            this.passengerBindingSource.DataSource = typeof(Passenger);
             // 
             // groupBox1
             // 

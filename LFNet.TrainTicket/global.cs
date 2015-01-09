@@ -1,6 +1,11 @@
 using System;
 using System.Collections.Generic;
 using LFNet.Common.Net;
+using LFNet.Configuration;
+using LFNet.Net.Http;
+using LFNet.TrainTicket.Common;
+using LFNet.TrainTicket.Config;
+using LFNet.TrainTicket.Entity;
 
 namespace LFNet.TrainTicket
 {
@@ -88,8 +93,7 @@ namespace LFNet.TrainTicket
             {
                 List<StationInfo> stationInfos = new List<StationInfo>();
 
-                string stations =HttpRequest.Create(ActionUrls.StationsUrl, ActionUrls.QueryPageUrl, null, HttpMethod.GET, "", null)
-                        .GetString().Trim().Replace("var station_names ='", "").Replace("';","");
+                string stations = HttpClientFactory.Create(ActionUrls.QueryPageUrl).GetStringAsync(ActionUrls.StationsUrl).Result.Trim().Replace("var station_names ='", "").Replace("';","");
 
                 foreach (var str in stations.Split(new string[] {"@"}, StringSplitOptions.RemoveEmptyEntries))
                 {
@@ -119,7 +123,7 @@ namespace LFNet.TrainTicket
                 }
                 catch (Exception ex)
                 {
-                    Common.LogUtil.Log(ex);
+                    LFNet.Common.LogUtil.Log(ex);
                     if(time<tryTimes)
                     {
                         time++;
@@ -131,6 +135,31 @@ namespace LFNet.TrainTicket
                     
                 }
             } while (true);
+        }
+
+
+        public static AccountInfo GetAccount(string userName="")
+        {
+            try
+            {
+                return ConfigFileManager.GetConfig<AccountInfo>();
+            }
+            catch (Exception ex)
+            {
+               return null;
+            }
+        }
+
+        public static PassengerCollection GetPassengers()
+        {
+            try
+            {
+                return ConfigFileManager.GetConfig<PassengerCollection>();
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
     }
 }

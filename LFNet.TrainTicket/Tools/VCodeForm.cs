@@ -1,10 +1,10 @@
 using System;
 using System.Drawing;
 using System.Media;
-using System.Threading;
 using System.Windows.Forms;
+using LFNet.TrainTicket.Common;
 
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.Tools
 {
     public class VCodeForm : Form
     {

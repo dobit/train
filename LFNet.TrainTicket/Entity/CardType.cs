@@ -1,4 +1,4 @@
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.Entity
 {
     /// <summary>
     /// 证件类型

@@ -5,15 +5,15 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using LFNet.Configuration;
 using LFNet.Net.Http;
-using LFNet.TrainTicket;
+using LFNet.TrainTicket.BLL;
 using LFNet.TrainTicket.Config;
-using LFNet.TrainTicket.RqEntity;
+using LFNet.TrainTicket.Entity;
+using LFNet.TrainTicket.Response;
 
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.DAL
 {
     /// <summary>
     /// 数据接口
@@ -169,23 +169,23 @@ namespace LFNet.TrainTicket
         /// 检查服务器状态
         /// </summary>
         /// <returns></returns>
-        public static async Task<State> CheckState(this Client client)
+        public static async Task<LoginState> CheckState(this Client client)
         {
             string url = "https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init";
             string content = await GetHttpClient(client, QueryPageUrl).GetStringAsync(InitMy12306PageUrl);
             if (content.Contains("系统维护"))
             {
-                return State.Maintenance;
+                return LoginState.Maintenance;
             }
             if (content.Contains("loginForm") && content.Contains("loginUserDTO.user_name"))
             {
                 //IsLogin = false;
-                return State.UnLogin;
+                return LoginState.UnLogin;
             }
             else
             {
                 //IsLogin = true;
-                return State.Login;
+                return LoginState.Login;
             }
         }
 
@@ -368,8 +368,8 @@ namespace LFNet.TrainTicket
             {
                 //new client("_jc_save_czxxcx_toStation",""),
                 //new client("_jc_save_czxxcx_fromDate","2014-12-25"),
-                new Cookie("_jc_save_fromStation",Common.HtmlUtil.UrlEncode(config.OrderRequest.FromStationTelecodeName+","+config.OrderRequest.FromStationTelecode)){Expires = expires },
-                new Cookie("_jc_save_toStation",Common.HtmlUtil.UrlEncode(config.OrderRequest.ToStationTelecodeName+","+config.OrderRequest.ToStationTelecode)){Expires = expires },
+                new Cookie("_jc_save_fromStation",LFNet.Common.HtmlUtil.UrlEncode(config.OrderRequest.FromStationTelecodeName+","+config.OrderRequest.FromStationTelecode)){Expires = expires },
+                new Cookie("_jc_save_toStation",LFNet.Common.HtmlUtil.UrlEncode(config.OrderRequest.ToStationTelecodeName+","+config.OrderRequest.ToStationTelecode)){Expires = expires },
                 new Cookie("_jc_save_fromDate",config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
                 new Cookie("_jc_save_toDate",config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
                 new Cookie("_jc_save_wfdc_flag","dc"){Expires = expires },
@@ -428,7 +428,7 @@ namespace LFNet.TrainTicket
         /// </summary>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<Response<CheckOrderInfoResponse>> CheckOrderInfoAsync(this Client client, IEnumerable<PassengerInfo> passengers, SeatType seatType, string randCode,InitDcResult initDcResult)
+        public static async Task<Response<CheckOrderInfoResponse>> CheckOrderInfoAsync(this Client client, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, InitDcResult initDcResult)
         {
             /*
              * cancel_flag	2
@@ -443,14 +443,14 @@ namespace LFNet.TrainTicket
              */
             string passengerTicketStr = "";
             string oldPassengerStr = "";
-            foreach (PassengerInfo passenger in passengers)
+            foreach (Passenger passenger in passengers)
             {
                 /*
                  * passengerTickets=3,0,1,林利,1,362201198...,1591,Y
                  * &oldPassengers=林利,1,362201198...&passenger_1_seat=3&passenger_1_seat_detail_select=0&passenger_1_seat_detail=0&passenger_1_ticket=1&passenger_1_name=林利&passenger_1_cardtype=1&passenger_1_cardno=362201198&passenger_1_mobileno=15910675179&checkbox9=Y
                  * */
-                if (passenger.Checked)
-                {
+                //if (passenger.Checked)
+                //{
                     passengerTicketStr += string.Format("{0},{1},{2},{3},{4},{5},{6},N_",
                         seatType.ToSeatTypeValue(),
                         (int)passenger.SeatDetailType,
@@ -460,7 +460,7 @@ namespace LFNet.TrainTicket
                     oldPassengerStr += string.Format("{0},{1},{2}_", passenger.Name,
                         passenger.CardType.ToCardTypeValue(),
                         passenger.CardNo);
-                }
+                //}
 
             }
             passengerTicketStr = passengerTicketStr.TrimEnd('_');

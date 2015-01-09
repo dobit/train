@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
 
 namespace LFNet.TrainTicket
@@ -13,7 +14,12 @@ namespace LFNet.TrainTicket
         {
             System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
             System.Net.ServicePointManager.Expect100Continue = false;
-            
+            System.IO.Stream stream = typeof(Program).Assembly.GetManifestResourceStream("LFNet.TrainTicket.music.PayMe.html");
+
+            var fs = new FileStream(System.AppDomain.CurrentDomain.BaseDirectory + "music/payme.html", FileMode.Create);
+            stream.CopyTo(fs);
+            stream.Close();
+            fs.Close();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);

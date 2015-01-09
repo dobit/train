@@ -8,7 +8,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using LFNet.Common;
 using LFNet.TrainTicket.Config;
+using LFNet.TrainTicket.Entity;
+using LFNet.TrainTicket.Tools;
 using MSScriptControl;
 using Newtonsoft.Json;
 using Microsoft.JScript;
@@ -18,17 +21,17 @@ namespace LFNet.TrainTicket
 {
     public static class Utils
     {
-        public const string UserAgent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
-        public static LFNet.Net.Http.JHttpClient GetHttpClient(this Account account, string referrer,bool isAjax=false)
-        {
-            Net.Http.JHttpClient httpClient = HttpClientFactory.Create(referrer, UserAgent, account.Cookie);
+        //public const string UserAgent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
+        //public static LFNet.Net.Http.JHttpClient GetHttpClient(this Account account, string referrer,bool isAjax=false)
+        //{
+        //    Net.Http.JHttpClient httpClient = HttpClientFactory.Create(referrer, UserAgent, account.Cookie);
 
-            httpClient.DefaultRequestHeaders.Add("X-Requested-With","XMLHttpRequest");
-            httpClient.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.8");
-            httpClient.DefaultRequestHeaders.Add("Origin"," https://kyfw.12306.cn");
-            httpClient.DefaultRequestHeaders.Add("Connection","keep-alive");
-            return httpClient;
-        }
+        //    httpClient.DefaultRequestHeaders.Add("X-Requested-With","XMLHttpRequest");
+        //    httpClient.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.8");
+        //    httpClient.DefaultRequestHeaders.Add("Origin"," https://kyfw.12306.cn");
+        //    httpClient.DefaultRequestHeaders.Add("Connection","keep-alive");
+        //    return httpClient;
+        //}
 
 
         public static string ToDisplayString(this List<TrainItemInfo> list)
@@ -117,7 +120,7 @@ namespace LFNet.TrainTicket
             StringBuilder sb = new StringBuilder();
             foreach (var key in forms.AllKeys)
             {
-                sb.AppendFormat("&{0}={1}", Common.HtmlUtil.UrlEncode(key), Common.HtmlUtil.UrlEncode(forms[key]));
+                sb.AppendFormat("&{0}={1}", HtmlUtil.UrlEncode(key), HtmlUtil.UrlEncode(forms[key]));
             }
             if(sb.Length>0)
             return sb.Remove(0, 1).ToString();
@@ -250,7 +253,7 @@ namespace LFNet.TrainTicket
      
         public static string Encode32(string input) {
           string  keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-             input = Common.HtmlUtil.UrlEncode(input); 
+             input = HtmlUtil.UrlEncode(input); 
             var output = ""; 
             uint chr1, chr2, chr3;
             int enc1, enc2, enc3, enc4; 

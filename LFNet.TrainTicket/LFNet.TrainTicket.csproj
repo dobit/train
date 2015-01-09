@@ -57,14 +57,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Account.cs" />
     <Compile Include="ActionUrls.cs" />
-    <Compile Include="BLL\AccountInfo.cs" />
+    <Compile Include="Entity\AccountInfo.cs" />
     <Compile Include="BLL\Client.cs" />
     <Compile Include="BLL\ClientEventArgs.cs" />
+    <Compile Include="BLL\ExcuteState.cs" />
     <Compile Include="Common\Cracker.cs" />
     <Compile Include="Config\PayType.cs" />
-    <Compile Include="DLL\DynamicJsResult.cs" />
+    <Compile Include="DAL\DynamicJsResult.cs" />
     <Compile Include="Entity\CardType.cs" />
     <Compile Include="Config\BuyMode.cs" />
     <Compile Include="Config\BuyTicketConfig.cs" />
@@ -72,13 +72,14 @@
     <Compile Include="Global.cs" />
     <Compile Include="Common\HttpMethod.cs" />
     <Compile Include="Common\HttpRequest.cs" />
-    <Compile Include="DLL\InitDcResult.cs" />
-    <Compile Include="DLL\InterfaceProvider.cs" />
-    <Compile Include="Config\Passenger.cs" />
+    <Compile Include="DAL\InitDcResult.cs" />
+    <Compile Include="DAL\InterfaceProvider.cs" />
+    <Compile Include="Entity\Passenger.cs" />
     <Compile Include="Common\JHttpRequest.cs" />
-    <Compile Include="DLL\LoginPageResult.cs" />
+    <Compile Include="DAL\LoginPageResult.cs" />
     <Compile Include="Common\Mp3.cs" />
-    <Compile Include="DLL\PageResult.cs" />
+    <Compile Include="DAL\PageResult.cs" />
+    <Compile Include="RandCodeType.cs" />
     <Compile Include="Response\CheckOrderInfoResponse.cs" />
     <Compile Include="Response\CheckRandCodeAnsyn.cs" />
     <Compile Include="Response\CheckResponse.cs" />
@@ -97,6 +98,7 @@
     <Compile Include="Entity\ResYpInfo.cs" />
     <Compile Include="Entity\SeatType.cs" />
     <Compile Include="Entity\StationInfo.cs" />
+    <Compile Include="BLL\LoginState.cs" />
     <Compile Include="TextValue.cs" />
     <Compile Include="Entity\TicketType.cs" />
     <Compile Include="AutoVCodeType.cs" />

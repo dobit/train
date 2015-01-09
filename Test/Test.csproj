@@ -37,13 +37,12 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BouncyCastle.Crypto">
-      <HintPath>.\BouncyCastle.Crypto.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -62,10 +61,6 @@
     <ProjectReference Include="..\LFNet.Net.Http\LFNet.Net.Http.csproj">
       <Project>{173a16b4-448e-4752-b944-97fc9eb84eac}</Project>
       <Name>LFNet.Net.Http</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\LFNet.TrainTicket\LFNet.TrainTicket.csproj">
-      <Project>{898346E0-D427-4976-A13C-1BD6156AEF91}</Project>
-      <Name>LFNet.TrainTicket</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

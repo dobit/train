@@ -1,4 +1,4 @@
-namespace LFNet.TrainTicket.RqEntity
+namespace LFNet.TrainTicket.Entity
 {
     /// <summary>
     /// {"countT":0,"count":5,"ticket":111,"op_1":true,"op_2":false}

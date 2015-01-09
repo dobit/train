@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LFNet.TrainTicket.Config;
-using LFNet.TrainTicket.RqEntity;
+using LFNet.TrainTicket.DAL;
+using LFNet.TrainTicket.Entity;
+using LFNet.TrainTicket.Response;
 
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.BLL
 {
     /// <summary>
     /// 代表一个模拟的客户端
@@ -17,22 +18,71 @@ namespace LFNet.TrainTicket
     public class Client
     {
         #region Events
+        /// <summary>
+        /// 运行状态发生变化
+        /// </summary>
+        public event EventHandler<ClientEventArgs<ExcuteState>> ExcuteStateChanged;
 
-        public event EventHandler<ClientEventArgs> ClientChanged;
+        protected virtual void OnExcuteStateChanged(ClientEventArgs<ExcuteState> e)
+        {
+            EventHandler<ClientEventArgs<ExcuteState>> handler = ExcuteStateChanged;
+            if (handler != null) handler(this, e);
+        }
+
+        /// <summary>
+        /// 客户端状态发生改变
+        /// </summary>
+        public event EventHandler<ClientEventArgs<LoginState>> LoginStateChanged;
+
+        protected virtual void OnLoginStateChanged(ClientEventArgs<LoginState> e)
+        {
+            EventHandler<ClientEventArgs<LoginState>> handler = LoginStateChanged;
+            if (handler != null) handler(this, e);
+        }
+
+
+        public event EventHandler<ClientEventArgs<string>> ClientChanged;
 
         /// <summary>
         /// 乘客信息发生变化
         /// </summary>
-        public event EventHandler PassengersChanged;
+        public event EventHandler<ClientEventArgs<List<Passenger>>>  PassengersChanged;
+
+        protected virtual void OnPassengersChanged(ClientEventArgs<List<Passenger>> e)
+        {
+            EventHandler<ClientEventArgs<List<Passenger>>> handler = PassengersChanged;
+            if (handler != null) handler(this, e);
+        }
 
         /// <summary>
         /// 触发事件
         /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnClientChanged(string message)
+        /// <param name="e"></param>
+        protected virtual void OnClientChanged(ClientEventArgs<string> e)
         {
-            EventHandler<ClientEventArgs> handler = ClientChanged;
-            if (handler != null) handler(this, new ClientEventArgs(message));
+            EventHandler<ClientEventArgs<string>> handler = ClientChanged;
+            if (handler != null) handler(this, e);
+        }
+
+        /// <summary>
+        /// 当发生错误时
+        /// </summary>
+        public event EventHandler<ClientEventArgs<Exception>> Error;
+
+        protected virtual void OnError(ClientEventArgs<Exception> e)
+        {
+            EventHandler<ClientEventArgs<Exception>> handler = Error;
+            if (handler != null) handler(this, e);
+        }
+        /// <summary>
+        /// 当出现可订的票时警告
+        /// </summary>
+        public event EventHandler<ClientEventArgs> Alarm;
+
+        protected virtual void OnAlarm(ClientEventArgs e)
+        {
+            EventHandler<ClientEventArgs> handler = Alarm;
+            if (handler != null) handler(this, e);
         }
 
         #endregion
@@ -51,6 +101,10 @@ namespace LFNet.TrainTicket
         /// 查询页面的动态js检测结果
         /// </summary>
         private DynamicJsResult _queryPageDynamicJsResult = null;
+
+        private LoginState _loginState;
+        private ExcuteState _excuteState;
+
         #endregion
 
         #region  Properties
@@ -60,17 +114,50 @@ namespace LFNet.TrainTicket
         public AccountInfo Account { get; set; }
 
         ///乘客信息
-        public IList<PassengerInfo> PassengerInfos { get; set; }
+        public List<Passenger> Passengers { get; set; }
 
         /// <summary>
         /// 获取的列车信息
         /// </summary>
-        public List<TrainItemInfo> TrainInfos { get; set; } 
+        public List<TrainItemInfo> TrainInfos { get; set; }
+
+        /// <summary>
+        /// 登录状态发生变化
+        /// </summary>
+        public LoginState LoginState
+        {
+            get { return _loginState; }
+            private set
+            {
+                if (_loginState != value)
+                {
+                    _loginState = value;
+                    OnLoginStateChanged(new ClientEventArgs<LoginState>(value));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 执行状态发生变化
+        /// </summary>
+        public ExcuteState ExcuteState
+        {
+            get { return _excuteState; }
+            private set
+            {
+                if (_excuteState != value)
+                {
+                    _excuteState = value;
+                   OnExcuteStateChanged(new ClientEventArgs<ExcuteState>(value));
+                }
+            }
+        }
+
         /// <summary>
         /// Cookie信息
         /// </summary>
-        internal CookieContainer Cookie { get; private set; }
-        // internal InterfaceProvider DataProvider { get; set; }
+        public CookieContainer Cookie { get; private set; }
+       
 
         #endregion
 
@@ -80,6 +167,7 @@ namespace LFNet.TrainTicket
             Account = account;
             Cookie = new CookieContainer();
             TrainInfos=new List<TrainItemInfo>();
+            Passengers=new List<Passenger>();
         }
 
         #endregion
@@ -92,6 +180,7 @@ namespace LFNet.TrainTicket
         public async void Run()
         {
             this._stop = false;
+            this.ExcuteState = ExcuteState.Running;
             //登陆
             var login = await Login();
             //查询余票
@@ -102,7 +191,7 @@ namespace LFNet.TrainTicket
                 //display infomation
                 Info(list.ToDisplayString());
 
-                int needSeatNumber = Account.Passengers.Split(new []{','},StringSplitOptions.RemoveEmptyEntries).Length;//需要的票数
+                int needSeatNumber = this.Passengers.Count(p => p.Checked);// Account.Passengers.Split(new []{','},StringSplitOptions.RemoveEmptyEntries).Length;//需要的票数
 
                 foreach (string seatTypeStr in Account.SeatOrder.Split(','))
                 {
@@ -126,7 +215,7 @@ namespace LFNet.TrainTicket
                     if (validTrainItemInfos.Count == 0) continue;//无该座位的车次，换其它座位
 
                     //todo:事件 播放音乐
-
+                    OnAlarm(new ClientEventArgs("有可订的车次"));
                     Info(string.Format("{0}，找到" + validTrainItemInfos.Count + "趟列车", seatTypeStr));
                       List<TrainItemInfo> optimizeTrains = validTrainItemInfos.OrderBy(p => (int)p.TripTime.TotalHours).ThenByDescending(p => p.GetSeatNumber(seatType)).ToList(); //这么排序不是会买到临客？
                                 Info(string.Format("{0}，最优顺序为：{1}", seatTypeStr, string.Join(",", optimizeTrains.Select(p => p.TrainNo))));
@@ -134,7 +223,7 @@ namespace LFNet.TrainTicket
                     {
                         Info(string.Format("{0}，选定：{1}下单", seatTypeStr, optimizeTrain.TrainNo));
                        
-                        PassengerInfo[] passengers =this.PassengerInfos.Where(p=>Account.Passengers.Contains(p.code)).ToArray();
+                        Passenger[] passengers =this.Passengers.Where(p=>p.Checked).ToArray();//.Where(p=>Account.Passengers.Contains(p.code)).ToArray();
 
                         Thread.Sleep(10000);//鼠标单击等待
 
@@ -144,6 +233,7 @@ namespace LFNet.TrainTicket
                         if (!response.data.flag) //失败则再登录
                         {
                             Info( "需要重新登录");
+                            LoginState = LoginState.UnLogin;
                             await Login();
                         }
                         //提交查询
@@ -257,6 +347,7 @@ namespace LFNet.TrainTicket
 
 
             this._stop = true;
+            this.ExcuteState = ExcuteState.Stopped;
         }
 
         /// <summary>
@@ -279,7 +370,7 @@ namespace LFNet.TrainTicket
         public async Task<bool> Login()
         {
             //todo:检查用户状态
-
+            if (LoginState == LoginState.Login) return true;
             //打开登陆页面
             var loginPageResult = await this.GetLoginPageResult();
 
@@ -292,6 +383,7 @@ namespace LFNet.TrainTicket
             if (response.data != null && response.data.loginCheck == "Y")
             {
                 Info("登录成功");
+                LoginState = LoginState.Login;
                 //刷新乘客信息
                 Task<bool> refreshPassengers = RefreshPassengers();
                 return true;
@@ -299,6 +391,7 @@ namespace LFNet.TrainTicket
             else
             {
                 Info(response.messages[0].ToString());
+                LoginState = LoginState.UnLogin;
                 return false;
             }
         }
@@ -316,10 +409,35 @@ namespace LFNet.TrainTicket
         {
             OpenQueryPage();
             Response<GetPassengerDTOs> response = await this.GetPassengers(submitToken);
+
             if (response.data != null)
             {
-                this.PassengerInfos = response.data.normal_passengers;
+                bool findNewPassenger=false;
+                foreach (PassengerInfo jsonInfo in response.data.normal_passengers)
+                {
+                    var find = Passengers.FirstOrDefault(p => p.CardNo == jsonInfo.passenger_id_no);
+                    if (find == null)
+                    {
+                        Passengers.Add(new Passenger()
+                        {
+                            Name = jsonInfo.passenger_name,
+                            CardNo = jsonInfo.passenger_id_no,
+                            CardType = (CardType)jsonInfo.passenger_id_type_code[0],
+                            MobileNo = jsonInfo.mobile_no,
+                            SeatDetailType = SeatDetailType.随机,
+                            Checked = false,
+                            SeatType = SeatType.硬卧,
+                            TicketType = (TicketType)int.Parse(jsonInfo.passenger_type)
+
+                        });
+                        findNewPassenger = true;
+                    }
+                }
+
+                //this.Passengers = response.data.normal_passengers;
                 //事件乘客发生变动
+                if(findNewPassenger)
+                OnPassengersChanged(new ClientEventArgs<List<Passenger>>(this.Passengers));
                 return true;
             }
             else
@@ -466,7 +584,9 @@ namespace LFNet.TrainTicket
                 if (checkRandCodeAnsynResponse.data != null && checkRandCodeAnsynResponse.data.result == "1") break;
                 else
                 {
-                    Info(checkRandCodeAnsynResponse.messages[0].ToString());
+                    if (checkRandCodeAnsynResponse.messages!=null&&checkRandCodeAnsynResponse.messages.Count>0)
+                        Info(checkRandCodeAnsynResponse.messages[0].ToString());
+                    Info("验证码不正确");
                 }
             } while (true);
             return vcode;
@@ -474,7 +594,7 @@ namespace LFNet.TrainTicket
 
         private async void Info(string message)
         {
-            OnClientChanged(message);
+            OnClientChanged(new ClientEventArgs<string>(message));
         }
 
 

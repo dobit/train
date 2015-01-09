@@ -21,26 +21,6 @@ using Newtonsoft.Json;
 
 namespace LFNet.TrainTicket
 {
-
-
-    public enum State
-    {
-        /// <summary>
-        /// 维护
-        /// </summary>
-        Maintenance,
-
-        /// <summary>
-        /// 未登录
-        /// </summary>
-        UnLogin,
-
-        /// <summary>
-        /// 登录
-        /// </summary>
-        Login
-    }
-
     /// <summary>
     /// 代表一个账号
     /// </summary>
@@ -122,24 +102,24 @@ namespace LFNet.TrainTicket
         /// 检查服务器状态
         /// </summary>
         /// <returns></returns>
-        public State CheckState()
+        public LoginState CheckState()
         {
             string url = "https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init";
             string content =
                 this.GetHttpClient(ActionUrls.QueryPageUrl).GetStringAsync(ActionUrls.InitMy12306PageUrl).Result;// HttpRequest.Create(url, "https://dynamic.12306.cn/otsweb/loginAction.do?method=init", Cookie, HttpMethod.GET, "", this.Proxy).GetString();
             if (content.Contains("系统维护"))
             {
-                return State.Maintenance;
+                return LoginState.Maintenance;
             }
             if (content.Contains("loginForm") && content.Contains("loginUserDTO.user_name"))
             {
                 IsLogin = false;
-                return State.UnLogin;
+                return LoginState.UnLogin;
             }
             else
             {
                 IsLogin = true;
-                return State.Login;
+                return LoginState.Login;
             }
         }
 
@@ -205,15 +185,6 @@ namespace LFNet.TrainTicket
             OnClientChanged(message);
         }
 
-
-        /// <summary>
-        /// 获取乘客信息
-        /// </summary>
-        /// <returns></returns>
-        public GetPassengerDTOs GetPassengers()
-        {
-            OpenQueryPage();
-        }
 
 
         public bool CheckUser()
@@ -545,14 +516,14 @@ namespace LFNet.TrainTicket
         /// </summary>
         /// <param name="vCodeType"></param>
         /// <returns></returns>
-        public Image GetVerifyCode(VCodeType vCodeType)
+        public Image GetVerifyCode(RandCodeType vCodeType)
         {
             //0.9789911571440171
             Random random = new Random(DateTime.Now.Millisecond);
 
             string url = "https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=login&rand=sjrand&" + random.NextDouble(); ;
             string referUrl = "https://dynamic.12306.cn/otsweb/loginAction.do?method=init";
-            if (vCodeType == VCodeType.SubmitOrder)
+            if (vCodeType == RandCodeType.SubmitOrder)
             {
                 url = "https://dynamic.12306.cn/otsweb/passCodeNewAction.do?module=passenger&rand=randp&" + random.NextDouble(); ;
                 referUrl = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init";
@@ -772,47 +743,6 @@ namespace LFNet.TrainTicket
             //    return base.ToString();
         }
 
-
-
-    }
-
-    /// <summary>
-    /// 验证码类型
-    /// </summary>
-    public enum VCodeType
-    {
-        Login,
-        SubmitOrder,
-    }
-
-
-    /// <summary>
-    /// 账户管理器
-    /// </summary>
-    public class AccountManager
-    {
-        static Dictionary<string, Account> accounts = new Dictionary<string, Account>();
-        /// <summary>
-        /// 当账号密码代理ip变化时会创建新的账号，否则沿用原来的账号
-        /// </summary>
-        /// <param name="userName"></param>
-        /// <param name="password"></param>
-        /// <param name="proxyIp"></param>
-        /// <returns></returns>
-        public static Account GetAccount(string userName, string password, string proxyIp)
-        {
-            string key = string.Format("{0},{1},{2}", userName, password, proxyIp).ToLower();
-            if (accounts.ContainsKey(key))
-            {
-                return accounts[key];
-            }
-            else
-            {
-                Account account = new Account(userName, password, proxyIp);
-                accounts.Add(key, account);
-                return account;
-            }
-        }
 
 
     }

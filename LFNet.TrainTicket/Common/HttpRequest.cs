@@ -2,12 +2,11 @@ using System;
 using System.Collections.Specialized;
 using System.IO;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml.Serialization;
 using Newtonsoft.Json;
 
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.Common
 {
     /// <summary>
     /// 创建一个Http请求
@@ -69,7 +68,7 @@ namespace LFNet.TrainTicket
              StringBuilder sb=new StringBuilder();
              foreach (var key in forms.AllKeys)
              {
-                 sb.AppendFormat("&{0}={1}", key, Common.HtmlUtil.UrlEncode(forms[key]));
+                 sb.AppendFormat("&{0}={1}", key, LFNet.Common.HtmlUtil.UrlEncode(forms[key]));
              }
              
              PostStr = sb.Remove(0,1).ToString();

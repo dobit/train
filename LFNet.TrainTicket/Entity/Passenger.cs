@@ -1,7 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Xml.Serialization;
-namespace LFNet.TrainTicket.Config
+
+namespace LFNet.TrainTicket.Entity
 {
     /// <summary>
     /// 乘车人信息
@@ -63,5 +64,13 @@ namespace LFNet.TrainTicket.Config
             get { return _seatDetailType; }
             set { _seatDetailType = value; }
         }
+    }
+
+    /// <summary>
+    ///  全部乘客信息
+    /// </summary>
+    public class PassengerCollection : List<Passenger>
+    {
+        
     }
 }

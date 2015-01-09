@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using LFNet.TrainTicket.Config;
+using LFNet.TrainTicket.Entity;
 
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.Config
 {
     /// <summary>
     /// π∫∆±…Ë÷√

@@ -87,53 +87,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Config\UserConfig.cs" />
-    <Compile Include="Controls\PassengersSetCtrl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\PassengersSetCtrl.Designer.cs">
-      <DependentUpon>PassengersSetCtrl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\SeatTypesCtrl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\SeatTypesCtrl.Designer.cs">
-      <DependentUpon>SeatTypesCtrl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\StationCtrl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\StationCtrl.Designer.cs">
-      <DependentUpon>StationCtrl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\TrainclassCtrl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\TrainclassCtrl.Designer.cs">
-      <DependentUpon>TrainclassCtrl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\TrainPassCtrl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\TrainPassCtrl.Designer.cs">
-      <DependentUpon>TrainPassCtrl.cs</DependentUpon>
-    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
-    </Compile>
-    <Compile Include="OptionForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="OptionForm.Designer.cs">
-      <DependentUpon>OptionForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="PassengerForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PassengerForm.Designer.cs">
-      <DependentUpon>PassengerForm.cs</DependentUpon>
     </Compile>
     <Compile Include="PassengersForm.cs">
       <SubType>Form</SubType>
@@ -149,29 +107,8 @@
     <Compile Include="webBrowserForm.Designer.cs">
       <DependentUpon>webBrowserForm.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="Controls\PassengersSetCtrl.resx">
-      <DependentUpon>PassengersSetCtrl.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Controls\SeatTypesCtrl.resx">
-      <DependentUpon>SeatTypesCtrl.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Controls\StationCtrl.resx">
-      <DependentUpon>StationCtrl.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Controls\TrainclassCtrl.resx">
-      <DependentUpon>TrainclassCtrl.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Controls\TrainPassCtrl.resx">
-      <DependentUpon>TrainPassCtrl.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="OptionForm.resx">
-      <DependentUpon>OptionForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PassengerForm.resx">
-      <DependentUpon>PassengerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PassengersForm.resx">
       <DependentUpon>PassengersForm.cs</DependentUpon>
@@ -190,15 +127,6 @@
       <DependentUpon>webBrowserForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
-    <None Include="Properties\DataSources\LFNet.TrainTicket.Config.AccountInfo.datasource" />
-    <None Include="Properties\DataSources\LFNet.TrainTicket.Config.BuyTicketConfig.datasource" />
-    <None Include="Properties\DataSources\LFNet.TrainTicket.Config.OrderRequest.datasource">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Properties\DataSources\LFNet.TrainTicket.Config.Passenger.datasource" />
-    <None Include="Properties\DataSources\LFNet.TrainTicket.Config.SystemSetting.datasource" />
-    <None Include="Properties\DataSources\LFNet.TrainTicket.Config.UserAccount.datasource" />
-    <None Include="Properties\DataSources\QueryTrainInfo.datasource" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -215,6 +143,10 @@
     <ProjectReference Include="..\..\Common\LFNet.Common\LFNet.Common.csproj">
       <Project>{00f65e3b-b7ad-42f2-a398-56d5cddfe125}</Project>
       <Name>LFNet.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LFNet.TrainTicket.Windows\LFNet.TrainTicket.Windows.csproj">
+      <Project>{b24746c2-8232-4f0d-b325-bf3e8b4653fc}</Project>
+      <Name>LFNet.TrainTicket.Windows</Name>
     </ProjectReference>
     <ProjectReference Include="..\LFNet.TrainTicket\LFNet.TrainTicket.csproj">
       <Project>{898346E0-D427-4976-A13C-1BD6156AEF91}</Project>
@@ -283,6 +215,9 @@
     <Content Include="music\七秒钟的记忆.mp3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Controls\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

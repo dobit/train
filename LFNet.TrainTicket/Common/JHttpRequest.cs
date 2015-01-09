@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
-namespace LFNet.TrainTicket
+using System.Text;
+
+namespace LFNet.TrainTicket.Common
 {
     public class JHttpClient
     {
@@ -79,7 +79,7 @@ namespace LFNet.TrainTicket
             StringBuilder sb = new StringBuilder();
             foreach (var key in nv.AllKeys)
             {
-                sb.AppendFormat("&{0}={1}", key, Common.HtmlUtil.UrlEncode(nv[key]));
+                sb.AppendFormat("&{0}={1}", key, LFNet.Common.HtmlUtil.UrlEncode(nv[key]));
             }
             if (url.Contains("?")) url += sb.ToString();
             else

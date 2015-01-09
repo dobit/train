@@ -3,6 +3,37 @@ using LFNet.TrainTicket.Config;
 
 namespace LFNet.TrainTicket
 {
+    /// <summary>
+    /// 账户管理器
+    /// </summary>
+    public class AccountManager
+    {
+        static Dictionary<string, Account> accounts = new Dictionary<string, Account>();
+        /// <summary>
+        /// 当账号密码代理ip变化时会创建新的账号，否则沿用原来的账号
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <param name="password"></param>
+        /// <param name="proxyIp"></param>
+        /// <returns></returns>
+        public static Account GetAccount(string userName, string password, string proxyIp)
+        {
+            string key = string.Format("{0},{1},{2}", userName, password, proxyIp).ToLower();
+            if (accounts.ContainsKey(key))
+            {
+                return accounts[key];
+            }
+            else
+            {
+                Account account = new Account(userName, password, proxyIp);
+                accounts.Add(key, account);
+                return account;
+            }
+        }
+
+
+    }
+
     public static class AccountManager
     {
         static AccountManager()

@@ -34,7 +34,6 @@
             this.webBrowser1 = new System.Windows.Forms.WebBrowser();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.tbUsername = new System.Windows.Forms.TextBox();
-            this.userAccountBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.tbPassword = new System.Windows.Forms.TextBox();
             this.btnOpenExplorer = new System.Windows.Forms.Button();
             this.cbForce = new System.Windows.Forms.CheckBox();
@@ -49,13 +48,17 @@
             this.label11 = new System.Windows.Forms.Label();
             this.nudDelay = new System.Windows.Forms.NumericUpDown();
             this.label10 = new System.Windows.Forms.Label();
-            this.orderRequestBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.tbToStation = new LFNet.TrainTicket.Controls.StationCtrl();
+            this.tbFromStation = new LFNet.TrainTicket.Controls.StationCtrl();
+            this.passengersSetCtrl3 = new LFNet.TrainTicket.Controls.PassengersSetCtrl();
             this.label5 = new System.Windows.Forms.Label();
             this.btnStop = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.lbSeattypes = new System.Windows.Forms.Label();
-            this.systemSettingBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.seatTypesCtrl1 = new LFNet.TrainTicket.Controls.SeatTypesCtrl();
             this.btnQuery = new System.Windows.Forms.Button();
+            this.tbTrainPass = new LFNet.TrainTicket.Controls.TrainPassCtrl();
+            this.tbTrainclass = new LFNet.TrainTicket.Controls.TrainclassCtrl();
             this.tbTrainNo = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
@@ -65,19 +68,14 @@
             this.label4 = new System.Windows.Forms.Label();
             this.tbDate = new System.Windows.Forms.DateTimePicker();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btnLogin = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.关于AToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.axWindowsMediaPlayer1 = new AxWMPLib.AxWindowsMediaPlayer();
-            this.tbToStation = new LFNet.TrainTicket.Controls.StationCtrl();
-            this.tbFromStation = new LFNet.TrainTicket.Controls.StationCtrl();
-            this.passengersSetCtrl3 = new LFNet.TrainTicket.Controls.PassengersSetCtrl();
-            this.seatTypesCtrl1 = new LFNet.TrainTicket.Controls.SeatTypesCtrl();
-            this.tbTrainPass = new LFNet.TrainTicket.Controls.TrainPassCtrl();
-            this.tbTrainclass = new LFNet.TrainTicket.Controls.TrainclassCtrl();
+            this.accountInfoBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.adPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.userAccountBindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -87,11 +85,10 @@
             this.groupBox4.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudDelay)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.orderRequestBindingSource)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.systemSettingBindingSource)).BeginInit();
             this.groupBox2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.axWindowsMediaPlayer1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // adPanel
@@ -114,20 +111,16 @@
             // 
             // tbUsername
             // 
-            this.tbUsername.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.userAccountBindingSource, "Username", true));
+            this.tbUsername.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.accountInfoBindingSource, "Username", true));
             this.tbUsername.Location = new System.Drawing.Point(80, 21);
             this.tbUsername.Name = "tbUsername";
             this.tbUsername.Size = new System.Drawing.Size(191, 21);
             this.tbUsername.TabIndex = 9;
             this.toolTip1.SetToolTip(this.tbUsername, "登陆用的用户名");
             // 
-            // userAccountBindingSource
-            // 
-            this.userAccountBindingSource.DataSource = typeof(LFNet.TrainTicket.Config.UserAccount);
-            // 
             // tbPassword
             // 
-            this.tbPassword.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.userAccountBindingSource, "Password", true));
+            this.tbPassword.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.accountInfoBindingSource, "Password", true));
             this.tbPassword.Location = new System.Drawing.Point(342, 20);
             this.tbPassword.Name = "tbPassword";
             this.tbPassword.PasswordChar = '*';
@@ -311,9 +304,34 @@
             this.label10.TabIndex = 40;
             this.label10.Text = "刷新间隔:";
             // 
-            // orderRequestBindingSource
+            // tbToStation
             // 
-            this.orderRequestBindingSource.DataSource = typeof(LFNet.TrainTicket.Config.OrderRequest);
+            this.tbToStation.AutoSize = true;
+            this.tbToStation.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "ToStationTeleCode", true));
+            this.tbToStation.Location = new System.Drawing.Point(286, 24);
+            this.tbToStation.Margin = new System.Windows.Forms.Padding(4);
+            this.tbToStation.Name = "tbToStation";
+            this.tbToStation.Size = new System.Drawing.Size(124, 23);
+            this.tbToStation.TabIndex = 32;
+            this.tbToStation.Value = "";
+            // 
+            // tbFromStation
+            // 
+            this.tbFromStation.AutoSize = true;
+            this.tbFromStation.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "FromStationTeleCode", true));
+            this.tbFromStation.Location = new System.Drawing.Point(82, 24);
+            this.tbFromStation.Margin = new System.Windows.Forms.Padding(4);
+            this.tbFromStation.Name = "tbFromStation";
+            this.tbFromStation.Size = new System.Drawing.Size(124, 23);
+            this.tbFromStation.TabIndex = 31;
+            this.tbFromStation.Value = "";
+            // 
+            // passengersSetCtrl3
+            // 
+            this.passengersSetCtrl3.Location = new System.Drawing.Point(84, 91);
+            this.passengersSetCtrl3.Name = "passengersSetCtrl3";
+            this.passengersSetCtrl3.Size = new System.Drawing.Size(561, 143);
+            this.passengersSetCtrl3.TabIndex = 45;
             // 
             // label5
             // 
@@ -347,16 +365,25 @@
             // lbSeattypes
             // 
             this.lbSeattypes.AutoSize = true;
-            this.lbSeattypes.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.systemSettingBindingSource, "BuyTicketSeatOrder", true));
+            this.lbSeattypes.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.accountInfoBindingSource, "SeatOrder", true));
             this.lbSeattypes.Location = new System.Drawing.Point(80, 284);
             this.lbSeattypes.Name = "lbSeattypes";
             this.lbSeattypes.Size = new System.Drawing.Size(29, 12);
             this.lbSeattypes.TabIndex = 33;
             this.lbSeattypes.Text = "硬卧";
             // 
-            // systemSettingBindingSource
+            // seatTypesCtrl1
             // 
-            this.systemSettingBindingSource.DataSource = typeof(LFNet.TrainTicket.Config.SystemSetting);
+            this.seatTypesCtrl1.AutoSize = true;
+            this.seatTypesCtrl1.BackColor = System.Drawing.Color.BlanchedAlmond;
+            this.seatTypesCtrl1.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "SeatOrder", true));
+            this.seatTypesCtrl1.Location = new System.Drawing.Point(82, 241);
+            this.seatTypesCtrl1.Margin = new System.Windows.Forms.Padding(4);
+            this.seatTypesCtrl1.Name = "seatTypesCtrl1";
+            this.seatTypesCtrl1.Size = new System.Drawing.Size(600, 31);
+            this.seatTypesCtrl1.TabIndex = 24;
+            this.seatTypesCtrl1.Value = "其他,无座,硬座,软座,硬卧,软卧,高级软卧,二等座,一等座,特等座,商务座";
+            this.seatTypesCtrl1.ValueChanged += new System.EventHandler(this.seatTypesCtrl1_ValueChanged);
             // 
             // btnQuery
             // 
@@ -368,12 +395,31 @@
             this.btnQuery.UseVisualStyleBackColor = true;
             this.btnQuery.Click += new System.EventHandler(this.btnQuery_Click);
             // 
+            // tbTrainPass
+            // 
+            this.tbTrainPass.Location = new System.Drawing.Point(638, 49);
+            this.tbTrainPass.Margin = new System.Windows.Forms.Padding(4);
+            this.tbTrainPass.Name = "tbTrainPass";
+            this.tbTrainPass.Size = new System.Drawing.Size(142, 26);
+            this.tbTrainPass.TabIndex = 25;
+            this.tbTrainPass.Value = "QB";
+            // 
+            // tbTrainclass
+            // 
+           
+            this.tbTrainclass.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "TrainClass", true));
+            this.tbTrainclass.Location = new System.Drawing.Point(243, 49);
+            this.tbTrainclass.Margin = new System.Windows.Forms.Padding(4);
+            this.tbTrainclass.Name = "tbTrainclass";
+            this.tbTrainclass.Size = new System.Drawing.Size(402, 28);
+            this.tbTrainclass.TabIndex = 23;
+            this.tbTrainclass.Value = "";
+            // 
             // tbTrainNo
             // 
-            this.tbTrainNo.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.orderRequestBindingSource, "TrainNo", true));
-            this.tbTrainNo.Location = new System.Drawing.Point(80, 52);
+            this.tbTrainNo.Location = new System.Drawing.Point(82, 53);
             this.tbTrainNo.Name = "tbTrainNo";
-            this.tbTrainNo.Size = new System.Drawing.Size(199, 21);
+            this.tbTrainNo.Size = new System.Drawing.Size(156, 21);
             this.tbTrainNo.TabIndex = 21;
             // 
             // label3
@@ -390,9 +436,9 @@
             this.label8.AutoSize = true;
             this.label8.Location = new System.Drawing.Point(22, 61);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(65, 12);
+            this.label8.Size = new System.Drawing.Size(59, 12);
             this.label8.TabIndex = 20;
-            this.label8.Text = "出发车次：";
+            this.label8.Text = "出发车次:";
             // 
             // label2
             // 
@@ -405,7 +451,8 @@
             // 
             // tbTime
             // 
-            this.tbTime.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.orderRequestBindingSource, "StartTimeStr", true));
+            this.tbTime.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.accountInfoBindingSource, "StartTimeStr", true));
+            this.tbTime.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.tbTime.FormattingEnabled = true;
             this.tbTime.Items.AddRange(new object[] {
             "00:00--23:59",
@@ -417,7 +464,6 @@
             this.tbTime.Name = "tbTime";
             this.tbTime.Size = new System.Drawing.Size(97, 20);
             this.tbTime.TabIndex = 17;
-            this.tbTime.Text = "00:00--23:59";
             // 
             // label7
             // 
@@ -431,7 +477,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(430, 29);
+            this.label4.Location = new System.Drawing.Point(425, 29);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(59, 12);
             this.label4.TabIndex = 10;
@@ -439,7 +485,7 @@
             // 
             // tbDate
             // 
-            this.tbDate.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.orderRequestBindingSource, "TrainDate", true));
+            this.tbDate.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "TrainDate", true));
             this.tbDate.Location = new System.Drawing.Point(488, 24);
             this.tbDate.MaxDate = new System.DateTime(2020, 10, 9, 0, 0, 0, 0);
             this.tbDate.MinDate = new System.DateTime(2012, 10, 9, 0, 0, 0, 0);
@@ -450,6 +496,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.btnLogin);
             this.groupBox2.Controls.Add(this.tbUsername);
             this.groupBox2.Controls.Add(this.tbPassword);
             this.groupBox2.Controls.Add(this.label6);
@@ -461,6 +508,16 @@
             this.groupBox2.TabIndex = 12;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "账户信息";
+            // 
+            // btnLogin
+            // 
+            this.btnLogin.Location = new System.Drawing.Point(519, 19);
+            this.btnLogin.Name = "btnLogin";
+            this.btnLogin.Size = new System.Drawing.Size(75, 23);
+            this.btnLogin.TabIndex = 12;
+            this.btnLogin.Text = "登录";
+            this.btnLogin.UseVisualStyleBackColor = true;
+            this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
             // 
             // label6
             // 
@@ -506,67 +563,9 @@
             this.axWindowsMediaPlayer1.TabIndex = 31;
             this.axWindowsMediaPlayer1.Visible = false;
             // 
-            // tbToStation
+            // accountInfoBindingSource
             // 
-            this.tbToStation.AutoSize = true;
-            this.tbToStation.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.orderRequestBindingSource, "ToStationTelecode", true));
-            this.tbToStation.Location = new System.Drawing.Point(286, 24);
-            this.tbToStation.Margin = new System.Windows.Forms.Padding(4);
-            this.tbToStation.Name = "tbToStation";
-            this.tbToStation.Size = new System.Drawing.Size(124, 23);
-            this.tbToStation.TabIndex = 32;
-            this.tbToStation.Value = "VAP";
-            // 
-            // tbFromStation
-            // 
-            this.tbFromStation.AutoSize = true;
-            this.tbFromStation.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.orderRequestBindingSource, "FromStationTelecode", true));
-            this.tbFromStation.Location = new System.Drawing.Point(82, 24);
-            this.tbFromStation.Margin = new System.Windows.Forms.Padding(4);
-            this.tbFromStation.Name = "tbFromStation";
-            this.tbFromStation.Size = new System.Drawing.Size(124, 23);
-            this.tbFromStation.TabIndex = 31;
-            this.tbFromStation.Value = "VAP";
-            // 
-            // passengersSetCtrl3
-            // 
-            this.passengersSetCtrl3.Location = new System.Drawing.Point(84, 91);
-            this.passengersSetCtrl3.Name = "passengersSetCtrl3";
-            this.passengersSetCtrl3.Size = new System.Drawing.Size(561, 143);
-            this.passengersSetCtrl3.TabIndex = 45;
-            // 
-            // seatTypesCtrl1
-            // 
-            this.seatTypesCtrl1.AutoSize = true;
-            this.seatTypesCtrl1.BackColor = System.Drawing.Color.BlanchedAlmond;
-            this.seatTypesCtrl1.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.systemSettingBindingSource, "BuyTicketSeatOrder", true));
-            this.seatTypesCtrl1.Location = new System.Drawing.Point(82, 241);
-            this.seatTypesCtrl1.Margin = new System.Windows.Forms.Padding(4);
-            this.seatTypesCtrl1.Name = "seatTypesCtrl1";
-            this.seatTypesCtrl1.Size = new System.Drawing.Size(600, 31);
-            this.seatTypesCtrl1.TabIndex = 24;
-            this.seatTypesCtrl1.Value = "其他,无座,硬座,软座,硬卧,软卧,高级软卧,二等座,一等座,特等座,商务座";
-            this.seatTypesCtrl1.ValueChanged += new System.EventHandler(this.seatTypesCtrl1_ValueChanged);
-            // 
-            // tbTrainPass
-            // 
-            this.tbTrainPass.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.orderRequestBindingSource, "TrainPassType", true));
-            this.tbTrainPass.Location = new System.Drawing.Point(602, 49);
-            this.tbTrainPass.Margin = new System.Windows.Forms.Padding(4);
-            this.tbTrainPass.Name = "tbTrainPass";
-            this.tbTrainPass.Size = new System.Drawing.Size(142, 26);
-            this.tbTrainPass.TabIndex = 25;
-            this.tbTrainPass.Value = "QB";
-            // 
-            // tbTrainclass
-            // 
-            this.tbTrainclass.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.orderRequestBindingSource, "TrainClass", true));
-            this.tbTrainclass.Location = new System.Drawing.Point(286, 52);
-            this.tbTrainclass.Margin = new System.Windows.Forms.Padding(4);
-            this.tbTrainclass.Name = "tbTrainclass";
-            this.tbTrainclass.Size = new System.Drawing.Size(308, 28);
-            this.tbTrainclass.TabIndex = 23;
-            this.tbTrainclass.Value = "QB#D#T#K#QT#";
+            this.accountInfoBindingSource.DataSource = typeof(LFNet.TrainTicket.Entity.AccountInfo);
             // 
             // Form1
             // 
@@ -584,7 +583,6 @@
             this.Name = "Form1";
             this.Text = "自动购票程序                  作者：dobit QQ:156798087";
             this.adPanel.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.userAccountBindingSource)).EndInit();
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -595,13 +593,12 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudDelay)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.orderRequestBindingSource)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.systemSettingBindingSource)).EndInit();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.axWindowsMediaPlayer1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -641,12 +638,8 @@
         private System.Windows.Forms.RichTextBox lbPassengers;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem 关于AToolStripMenuItem;
-        private System.Windows.Forms.BindingSource orderRequestBindingSource;
         private System.Windows.Forms.Button btnStop;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.BindingSource userAccountBindingSource;
-        
-        private System.Windows.Forms.BindingSource systemSettingBindingSource;
         private System.Windows.Forms.Button btnOpenExplorer;
        
         private System.Windows.Forms.Label label11;
@@ -657,6 +650,8 @@
         private System.Windows.Forms.CheckBox cbShowRealYp;
         private Controls.PassengersSetCtrl passengersSetCtrl3;
         private System.Windows.Forms.CheckBox cbAutoVCode;
+        private System.Windows.Forms.Button btnLogin;
+        private System.Windows.Forms.BindingSource accountInfoBindingSource;
     }
 }
 

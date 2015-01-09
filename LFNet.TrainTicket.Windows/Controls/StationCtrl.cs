@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using LFNet.TrainTicket.Entity;
 
 namespace LFNet.TrainTicket.Controls
 {

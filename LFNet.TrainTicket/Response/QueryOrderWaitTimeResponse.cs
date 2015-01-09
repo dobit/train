@@ -1,8 +1,4 @@
-﻿
-using System;
-using System.Collections.Generic;
-
-namespace LFNet.TrainTicket
+﻿namespace LFNet.TrainTicket.Response
 {
 
     public class QueryOrderWaitTimeResponse

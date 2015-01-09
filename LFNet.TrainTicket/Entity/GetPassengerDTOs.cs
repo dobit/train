@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LFNet.TrainTicket.RqEntity
+namespace LFNet.TrainTicket.Entity
 {
     public class GetPassengerDTOs
     {

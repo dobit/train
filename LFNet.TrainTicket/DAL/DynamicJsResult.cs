@@ -1,4 +1,4 @@
-namespace LFNet.TrainTicket
+namespace LFNet.TrainTicket.DAL
 {
     public class DynamicJsResult
     {
