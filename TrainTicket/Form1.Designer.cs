@@ -347,7 +347,6 @@
             // lbSeattypes
             // 
             this.lbSeattypes.AutoSize = true;
-            this.lbSeattypes.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.accountInfoBindingSource, "SeatOrder", true));
             this.lbSeattypes.Location = new System.Drawing.Point(80, 284);
             this.lbSeattypes.Name = "lbSeattypes";
             this.lbSeattypes.Size = new System.Drawing.Size(29, 12);

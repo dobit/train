@@ -1,4 +1,5 @@
-﻿namespace LFNet.TrainTicket
+﻿using  LFNet.TrainTicket.Controls;
+namespace LFNet.TrainTicket
 {
     partial class PassengersForm
     {
@@ -35,25 +36,23 @@
             // 
             this.passengersSetCtrl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.passengersSetCtrl1.Location = new System.Drawing.Point(0, 0);
-            this.passengersSetCtrl1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.passengersSetCtrl1.Name = "passengersSetCtrl1";
-            this.passengersSetCtrl1.Size = new System.Drawing.Size(964, 288);
+            this.passengersSetCtrl1.Size = new System.Drawing.Size(472, 298);
             this.passengersSetCtrl1.TabIndex = 0;
             // 
             // PassengersForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(964, 288);
+            this.ClientSize = new System.Drawing.Size(472, 298);
             this.Controls.Add(this.passengersSetCtrl1);
             this.Name = "PassengersForm";
-            this.Text = "乘车人员设置";
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private Controls.PassengersSetCtrl passengersSetCtrl1;
+        private LFNet.TrainTicket.Controls.PassengersSetCtrl passengersSetCtrl1;
+
+        
     }
 }

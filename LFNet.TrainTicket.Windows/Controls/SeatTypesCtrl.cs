@@ -33,12 +33,7 @@ namespace LFNet.TrainTicket.Controls
         }
 
         public event EventHandler ValueChanged;
-        public void Reset()
-        {
-            
-            
-           
-        }
+        
 
         void checkBox_CheckedChanged(object sender, EventArgs e)
         {
@@ -85,10 +80,6 @@ namespace LFNet.TrainTicket.Controls
                
             }
         }
-
-        private void tbSeatTypes_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
+        
     }
 }

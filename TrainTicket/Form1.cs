@@ -34,6 +34,7 @@ namespace LFNet.TrainTicket
 
             //从配置文件加载
             AccountInfo accountInfo = Global.GetAccount();
+            accountInfo=new AccountInfo();
             this.client = new Client(accountInfo);
             this.accountInfoBindingSource.DataSource = this.client.Account;
             BindEvents();
@@ -90,43 +91,43 @@ namespace LFNet.TrainTicket
         {
             ConfigFileManager.SaveConfig<AccountInfo>();
           
-            if (string.IsNullOrEmpty(tbUsername.Text))
+            if (string.IsNullOrEmpty(this.client.Account.Username))
             {
                 MessageBox.Show("用户名不能空");
                 tbUsername.Focus();
                 return;
             }
-            if (string.IsNullOrEmpty(tbPassword.Text))
+            if (string.IsNullOrEmpty(this.client.Account.Password))
             {
                 MessageBox.Show("密码不能空");
                 tbPassword.Focus();
                 return;
             }
-            if (string.IsNullOrEmpty(Config.BuyTicketConfig.Instance.OrderRequest.FromStationTelecode) || string.IsNullOrEmpty(Config.BuyTicketConfig.Instance.OrderRequest.ToStationTelecode))
+            if (string.IsNullOrEmpty(this.client.Account.FromStationTeleCode) || string.IsNullOrEmpty(this.client.Account.ToStationTeleCode))
             {
                 MessageBox.Show("出发站和目的站设置不正确");
                 return;
             }
-            if (string.IsNullOrEmpty(Config.BuyTicketConfig.Instance.OrderRequest.StartTimeStr))
+            if (string.IsNullOrEmpty(this.client.Account.StartTimeStr))
             {
                 MessageBox.Show("请选择出发时间");
                 tbTime.Focus();
                 return;
             }
-            if (Config.BuyTicketConfig.Instance.Passengers.Count(p => p.Checked) == 0)
+            if (this.client.Passengers.Count(p => p.Checked) == 0)
             {
                 MessageBox.Show("请选择乘客");
                 return;
             }
-            if (string.IsNullOrEmpty(Config.BuyTicketConfig.Instance.SystemSetting.BuyTicketSeatOrder))
+            if (string.IsNullOrEmpty(this.client.Account.SeatOrder))
             {
                 MessageBox.Show("请选择购买车票的席别顺序");
                 return;
             }
             string passengerNames = string.Join(",",
-                                                Config.BuyTicketConfig.Instance.Passengers.Where(p => p.Checked).Select(
+                                                this.client.Passengers.Where(p => p.Checked).Select(
                                                     p => p.Name).ToArray());
-            string confirmText = string.Format("乘车人为：{0}\r\n车票优先顺序为:{1}", passengerNames, Config.BuyTicketConfig.Instance.SystemSetting.BuyTicketSeatOrder);
+            string confirmText = string.Format("乘车人为：{0}\r\n车票优先顺序为:{1}", passengerNames, this.client.Account.SeatOrder);
             if (MessageBox.Show(confirmText, "请确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 Stop = false;
@@ -860,6 +861,13 @@ namespace LFNet.TrainTicket
             this.client.Error += Client_Error;
             this.client.ExcuteStateChanged += Client_ExcuteStateChanged;
             this.client.LoginStateChanged += Client_LoginStateChanged;
+            this.client.PassengersChanged += client_PassengersChanged;
+
+        }
+
+        void client_PassengersChanged(object sender, ClientEventArgs<List<Passenger>> e)
+        {
+           // this.passengersSetCtrl3.
         }
 
         private void Client_ExcuteStateChanged(object sender, ClientEventArgs<ExcuteState> e)
