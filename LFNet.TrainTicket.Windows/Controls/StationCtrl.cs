@@ -13,12 +13,18 @@ namespace LFNet.TrainTicket.Controls
     public partial class StationCtrl : UserControl
     {
 
-        List<StationInfo> stationInfos= Global.GetStations();
+        List<StationInfo> stationInfos= new List<StationInfo>();
         public StationCtrl()
         {
+            if (!DesignMode)
+            {
+                stationInfos = Global.GetStations();
+            }
             InitializeComponent();
-            comboBox1.DataSource = stationInfos;//.Where(p => p.PY.StartsWith(comboBox1.Text,StringComparison.OrdinalIgnoreCase) || p.Name.Contains(comboBox1.Text)).ToList();
-
+            
+                comboBox1.DataSource = stationInfos;
+                    //.Where(p => p.PY.StartsWith(comboBox1.Text,StringComparison.OrdinalIgnoreCase) || p.Name.Contains(comboBox1.Text)).ToList();
+            
             comboBox1.ValueMember = "Code";
             comboBox1.DisplayMember = "Name";
             listBox1.DataSource = stationInfos;
@@ -42,10 +48,10 @@ namespace LFNet.TrainTicket.Controls
             }
             else
             {
-                listBox1.DataSource= Global.GetStations().Where(
+                listBox1.DataSource = stationInfos.Where(
                     p =>
                     p.PY.StartsWith(comboBox1.Text, StringComparison.OrdinalIgnoreCase)||p.Name.StartsWith(comboBox1.Text, StringComparison.OrdinalIgnoreCase))
-                    .Union(Global.GetStations().Where(p =>p.Name.Contains(comboBox1.Text))).Select(p => p.Name).ToArray();
+                    .Union(stationInfos.Where(p => p.Name.Contains(comboBox1.Text))).Select(p => p.Name).ToArray();
             }
          
            
