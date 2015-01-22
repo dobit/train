@@ -46,6 +46,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\CheckBoxList.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\CheckBoxList.Designer.cs">
+      <DependentUpon>CheckBoxList.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\PassengerForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -90,6 +96,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Controls\CheckBoxList.resx">
+      <DependentUpon>CheckBoxList.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\PassengerForm.resx">
       <DependentUpon>PassengerForm.cs</DependentUpon>
     </EmbeddedResource>

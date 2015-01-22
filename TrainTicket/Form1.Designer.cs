@@ -44,12 +44,13 @@
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.lbPassengers = new System.Windows.Forms.RichTextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.ToStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
+            this.FromStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
             this.cbAutoVCode = new System.Windows.Forms.CheckBox();
             this.cbShowRealYp = new System.Windows.Forms.CheckBox();
             this.label11 = new System.Windows.Forms.Label();
             this.nudDelay = new System.Windows.Forms.NumericUpDown();
             this.label10 = new System.Windows.Forms.Label();
-            this.passengersSetCtrl3 = new LFNet.TrainTicket.Controls.PassengersSetCtrl();
             this.label5 = new System.Windows.Forms.Label();
             this.btnStop = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -73,8 +74,7 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.关于AToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.axWindowsMediaPlayer1 = new AxWMPLib.AxWindowsMediaPlayer();
-            this.FromStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
-            this.ToStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
+            this.checkBoxList1 = new LFNet.TrainTicket.Controls.CheckBoxList();
             this.adPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -214,6 +214,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.checkBoxList1);
             this.groupBox1.Controls.Add(this.ToStationCtrl);
             this.groupBox1.Controls.Add(this.FromStationCtrl);
             this.groupBox1.Controls.Add(this.cbAutoVCode);
@@ -222,7 +223,6 @@
             this.groupBox1.Controls.Add(this.label11);
             this.groupBox1.Controls.Add(this.nudDelay);
             this.groupBox1.Controls.Add(this.label10);
-            this.groupBox1.Controls.Add(this.passengersSetCtrl3);
             this.groupBox1.Controls.Add(this.btnOpenExplorer);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.btnStop);
@@ -247,6 +247,24 @@
             this.groupBox1.TabIndex = 11;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "购票设置";
+            // 
+            // ToStationCtrl
+            // 
+            this.ToStationCtrl.AutoSize = true;
+            this.ToStationCtrl.Location = new System.Drawing.Point(276, 24);
+            this.ToStationCtrl.Name = "ToStationCtrl";
+            this.ToStationCtrl.Size = new System.Drawing.Size(124, 23);
+            this.ToStationCtrl.TabIndex = 48;
+            this.ToStationCtrl.Value = "VAP";
+            // 
+            // FromStationCtrl
+            // 
+            this.FromStationCtrl.AutoSize = true;
+            this.FromStationCtrl.Location = new System.Drawing.Point(80, 24);
+            this.FromStationCtrl.Name = "FromStationCtrl";
+            this.FromStationCtrl.Size = new System.Drawing.Size(124, 23);
+            this.FromStationCtrl.TabIndex = 47;
+            this.FromStationCtrl.Value = "VAP";
             // 
             // cbAutoVCode
             // 
@@ -307,13 +325,6 @@
             this.label10.Size = new System.Drawing.Size(59, 12);
             this.label10.TabIndex = 40;
             this.label10.Text = "刷新间隔:";
-            // 
-            // passengersSetCtrl3
-            // 
-            this.passengersSetCtrl3.Location = new System.Drawing.Point(84, 91);
-            this.passengersSetCtrl3.Name = "passengersSetCtrl3";
-            this.passengersSetCtrl3.Size = new System.Drawing.Size(561, 143);
-            this.passengersSetCtrl3.TabIndex = 45;
             // 
             // label5
             // 
@@ -543,23 +554,15 @@
             this.axWindowsMediaPlayer1.TabIndex = 31;
             this.axWindowsMediaPlayer1.Visible = false;
             // 
-            // FromStationCtrl
+            // checkBoxList1
             // 
-            this.FromStationCtrl.AutoSize = true;
-            this.FromStationCtrl.Location = new System.Drawing.Point(80, 24);
-            this.FromStationCtrl.Name = "FromStationCtrl";
-            this.FromStationCtrl.Size = new System.Drawing.Size(124, 23);
-            this.FromStationCtrl.TabIndex = 47;
-            this.FromStationCtrl.Value = "VAP";
-            // 
-            // ToStationCtrl
-            // 
-            this.ToStationCtrl.AutoSize = true;
-            this.ToStationCtrl.Location = new System.Drawing.Point(276, 24);
-            this.ToStationCtrl.Name = "ToStationCtrl";
-            this.ToStationCtrl.Size = new System.Drawing.Size(124, 23);
-            this.ToStationCtrl.TabIndex = 48;
-            this.ToStationCtrl.Value = "VAP";
+            this.checkBoxList1.AutoSize = true;
+            this.checkBoxList1.DataSource = null;
+            this.checkBoxList1.Location = new System.Drawing.Point(84, 94);
+            this.checkBoxList1.Name = "checkBoxList1";
+            this.checkBoxList1.SelectedObjects = ((System.Collections.Generic.IList<object>)(resources.GetObject("checkBoxList1.SelectedObjects")));
+            this.checkBoxList1.Size = new System.Drawing.Size(678, 81);
+            this.checkBoxList1.TabIndex = 49;
             // 
             // Form1
             // 
@@ -642,12 +645,12 @@
         private AxWMPLib.AxWindowsMediaPlayer axWindowsMediaPlayer1;
         private System.Windows.Forms.CheckBox cbForce;
         private System.Windows.Forms.CheckBox cbShowRealYp;
-        private Controls.PassengersSetCtrl passengersSetCtrl3;
         private System.Windows.Forms.CheckBox cbAutoVCode;
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.BindingSource accountInfoBindingSource;
         private Controls.StationCtrl ToStationCtrl;
         private Controls.StationCtrl FromStationCtrl;
+        private Controls.CheckBoxList checkBoxList1;
     }
 }
 

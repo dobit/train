@@ -10,26 +10,24 @@ namespace LFNet.TrainTicket.Controls
 
         public SeatTypesCtrl()
         {
-           
-            
+            InitializeComponent();
             foreach (var seat in Seats.Split(' ').Reverse())
             {
                 CheckBox checkBox = new CheckBox()
                 {
                     Text = seat,
                     Dock = DockStyle.Left,
-                    Location =new Point(5,5),
+                    Location = new Point(5, 5),
                     //Margin = new Padding(5),
                     AutoSize = true,
-                    Checked=false
+                    Checked = false
 
                 };
                 checkBox.CheckedChanged += new EventHandler(checkBox_CheckedChanged);
                 //checkBox.Checked = true;
                 this.Controls.Add(checkBox);
-                
+
             }
-            InitializeComponent();
         }
 
         public event EventHandler ValueChanged;

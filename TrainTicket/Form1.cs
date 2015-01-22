@@ -851,7 +851,7 @@ namespace LFNet.TrainTicket
         private void btnLogin_Click(object sender, EventArgs e)
         {
             this.client.Account.SaveConfig();
-            Task<bool> login = this.client.Login();
+            login = await this.client.Login();
         }
 
         private void BindEvents()
