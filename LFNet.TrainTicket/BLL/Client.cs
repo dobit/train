@@ -162,6 +162,12 @@ namespace LFNet.TrainTicket.BLL
         #endregion
 
         #region ctor
+
+        public Client() : this(new AccountInfo())
+        {
+            
+        }
+
         public Client(AccountInfo account)
         {
             Account = account;
@@ -183,7 +189,10 @@ namespace LFNet.TrainTicket.BLL
             this.ExcuteState = ExcuteState.Running;
             //登陆
             var login = await Login();
+
+            
             //查询余票
+        QueryTickets:
            await QueryLeftTicket();
            var list = Filter(TrainInfos);
             if (list.Count > 0)
@@ -338,11 +347,12 @@ namespace LFNet.TrainTicket.BLL
                     }
 
                 }
-
-
-
             }
 
+            if (!_stop)
+            {
+                goto QueryTickets;
+            }
 
 
 

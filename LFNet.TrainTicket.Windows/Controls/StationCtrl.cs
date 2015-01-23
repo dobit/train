@@ -16,17 +16,18 @@ namespace LFNet.TrainTicket.Controls
         List<StationInfo> stationInfos= new List<StationInfo>();
         public StationCtrl()
         {
+           
+            InitializeComponent();
             if (!DesignMode)
             {
                 stationInfos = Global.GetStations();
             }
-            InitializeComponent();
-            
                 comboBox1.DataSource = stationInfos;
                     //.Where(p => p.PY.StartsWith(comboBox1.Text,StringComparison.OrdinalIgnoreCase) || p.Name.Contains(comboBox1.Text)).ToList();
             
             comboBox1.ValueMember = "Code";
             comboBox1.DisplayMember = "Name";
+            
             listBox1.DataSource = stationInfos;
         }
 
@@ -39,6 +40,7 @@ namespace LFNet.TrainTicket.Controls
                 if (listBox1.SelectedIndex < listBox1.Items.Count)
                 listBox1.SelectedIndex++;
                 comboBox1.SelectedText = listBox1.SelectedItem.ToString();
+                
             }
             else if( e.KeyCode == Keys.Up)
             {
@@ -57,19 +59,37 @@ namespace LFNet.TrainTicket.Controls
            
         }
 
-        public string Value
+        public StationInfo SelectedValue
         {
             get
             {
-                if (comboBox1.SelectedValue != null) return comboBox1.SelectedValue.ToString();
-                return "";
+                if (comboBox1.SelectedItem != null)
+                {
+                    return comboBox1.SelectedItem as StationInfo;
+                    //return new StationInfo(){Code=comboBox1.SelectedValue.ToString(),Name=comboBox1.SelectedItem};
+                }
+                return new StationInfo();
             }
             set
             {
-                if(value!=null)
-                comboBox1.SelectedValue = value;
+                if (value != null)
+                    comboBox1.SelectedItem = value;
             }
         }
+
+        //public string Value
+        //{
+        //    get
+        //    {
+        //        if (comboBox1.SelectedValue != null) return comboBox1.SelectedValue.ToString();
+        //        return "";
+        //    }
+        //    set
+        //    {
+        //        if(value!=null)
+        //        comboBox1.SelectedValue = value;
+        //    }
+        //}
 
         private void comboBox1_Leave(object sender, EventArgs e)
         {

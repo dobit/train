@@ -92,7 +92,8 @@ namespace LFNet.TrainTicket
             if (_stations == null)
             {
                 List<StationInfo> stationInfos = new List<StationInfo>();
-
+                System.Net.ServicePointManager.ServerCertificateValidationCallback =
+                    (sender, certificate, chain, errors) => true;
                 string stations = HttpClientFactory.Create(ActionUrls.QueryPageUrl).GetStringAsync(ActionUrls.StationsUrl).Result.Trim().Replace("var station_names ='", "").Replace("';","");
 
                 foreach (var str in stations.Split(new string[] {"@"}, StringSplitOptions.RemoveEmptyEntries))
@@ -158,7 +159,7 @@ namespace LFNet.TrainTicket
             }
             catch (Exception ex)
             {
-                return null;
+                return new PassengerCollection();
             }
         }
     }

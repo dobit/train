@@ -171,7 +171,7 @@ namespace LFNet.TrainTicket.DAL
         /// <returns></returns>
         public static async Task<LoginState> CheckState(this Client client)
         {
-            string url = "https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=init";
+           
             string content = await GetHttpClient(client, QueryPageUrl).GetStringAsync(InitMy12306PageUrl);
             if (content.Contains("ÏµÍ³Î¬»¤"))
             {
@@ -338,8 +338,8 @@ namespace LFNet.TrainTicket.DAL
         public static async Task<Response<string>> SubmitOrderRequest(this Client client, string secretStr, DynamicJsResult queryPageDynamicJsResult,  AccountInfo account)
         {
 
-            var config = ConfigFileManager.GetConfig<BuyTicketConfig>();
-            ;
+            //var config = ConfigFileManager.GetConfig<BuyTicketConfig>();
+            //;
             Dictionary<string, string> newforms = new Dictionary<string, string>()
             {
                 {queryPageDynamicJsResult.Key,queryPageDynamicJsResult.Value	},   
@@ -368,10 +368,10 @@ namespace LFNet.TrainTicket.DAL
             {
                 //new client("_jc_save_czxxcx_toStation",""),
                 //new client("_jc_save_czxxcx_fromDate","2014-12-25"),
-                new Cookie("_jc_save_fromStation",LFNet.Common.HtmlUtil.UrlEncode(config.OrderRequest.FromStationTelecodeName+","+config.OrderRequest.FromStationTelecode)){Expires = expires },
-                new Cookie("_jc_save_toStation",LFNet.Common.HtmlUtil.UrlEncode(config.OrderRequest.ToStationTelecodeName+","+config.OrderRequest.ToStationTelecode)){Expires = expires },
-                new Cookie("_jc_save_fromDate",config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
-                new Cookie("_jc_save_toDate",config.OrderRequest.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
+                new Cookie("_jc_save_fromStation",LFNet.Common.HtmlUtil.UrlEncode(account.FromStation+","+account.FromStationTeleCode)){Expires = expires },
+                new Cookie("_jc_save_toStation",LFNet.Common.HtmlUtil.UrlEncode(account.ToStation+","+account.ToStationTeleCode)){Expires = expires },
+                new Cookie("_jc_save_fromDate",account.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
+                new Cookie("_jc_save_toDate",account.BackTrainDate.ToString("yyyy-MM-dd")){Expires = expires },
                 new Cookie("_jc_save_wfdc_flag","dc"){Expires = expires },
                 // new client("current_captcha_type","C"){Expires = expires },
             };

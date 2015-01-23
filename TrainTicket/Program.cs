@@ -23,7 +23,7 @@ namespace LFNet.TrainTicket
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
-            MainForm = new Form1();
+            MainForm = new MainForm();//Form1();
             Application.Run(MainForm);
         }
 
@@ -33,6 +33,6 @@ namespace LFNet.TrainTicket
             
         }
 
-        public static Form1 MainForm { get; set; }
+        public static Form MainForm { get; set; }
     }
 }

@@ -45,6 +45,8 @@ namespace LFNet.TrainTicket
             this.ClientSize = new System.Drawing.Size(472, 298);
             this.Controls.Add(this.passengersSetCtrl1);
             this.Name = "PassengersForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "乘客设置";
             this.ResumeLayout(false);
 
         }

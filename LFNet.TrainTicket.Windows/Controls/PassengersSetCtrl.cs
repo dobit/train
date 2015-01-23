@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using LFNet.Configuration;
 using LFNet.TrainTicket.Config;
 using LFNet.TrainTicket.Entity;
 
@@ -27,7 +28,7 @@ namespace LFNet.TrainTicket.Controls
             try
             {
                 listView1.Items.Clear();
-                foreach (Passenger passenger in Config.BuyTicketConfig.Instance.Passengers)
+                foreach (Passenger passenger in Global.GetPassengers())
                 {
                     ListViewItem listViewItem = new ListViewItem();
                     listViewItem.Tag = passenger;
@@ -56,14 +57,12 @@ namespace LFNet.TrainTicket.Controls
 
         public void Save()
         {
-            List<Passenger> passengers = new List<Passenger>();
+            var passengers = new PassengerCollection();
             foreach (ListViewItem item in listView1.Items)
             {
                 passengers.Add(item.Tag as Passenger);
             }
-            Config.BuyTicketConfig.Instance.Passengers = passengers;
-
-            Config.BuyTicketConfig.Save();
+            passengers.SaveConfig();
         }
        
 

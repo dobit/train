@@ -2,6 +2,10 @@ namespace LFNet.TrainTicket.Entity
 {
     public class StationInfo
     {
+        public StationInfo()
+        {
+            
+        }
         public StationInfo(string stationStr)
         {
             string[] str = stationStr.Split('|');

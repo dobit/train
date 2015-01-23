@@ -14,7 +14,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using AxWMPLib;
 using LFNet.Common;
-using LFNet.Configuration;
 using LFNet.TrainTicket.BLL;
 using LFNet.TrainTicket.Common;
 using LFNet.TrainTicket.Config;
@@ -26,16 +25,16 @@ namespace LFNet.TrainTicket
     {
        
         public Client client;
-
+        public AccountInfo AccountInfo;
         private Thread t;
         public Form1()
         {
             InitializeComponent();
 
             //从配置文件加载
-            AccountInfo accountInfo = Global.GetAccount();
-            accountInfo=new AccountInfo();
-            this.client = new Client(accountInfo);
+            //AccountInfo accountInfo = AccountManager.GetAccountInfo("");
+            //accountInfo=new AccountInfo();
+            this.client = new Client();
             this.accountInfoBindingSource.DataSource = this.client.Account;
             BindEvents();
             axWindowsMediaPlayer1.PlayStateChange += axWindowsMediaPlayer1_PlayStateChange;
@@ -89,7 +88,7 @@ namespace LFNet.TrainTicket
 
         private void btnQuery_Click(object sender, EventArgs e)
         {
-            ConfigFileManager.SaveConfig<AccountInfo>();
+            
           
             if (string.IsNullOrEmpty(this.client.Account.Username))
             {
@@ -626,30 +625,30 @@ namespace LFNet.TrainTicket
 
         }
 
-        private List<TrainItemInfo> Filter(List<TrainItemInfo> querylist)
-        {
-            var result = new List<TrainItemInfo>();
-            BuyTicketConfig buyTicketConfig = ConfigFileManager.GetConfig<BuyTicketConfig>();
-            string trainClass =buyTicketConfig .OrderRequest.TrainClass;
-            string[] startTimeStrs = buyTicketConfig.OrderRequest.StartTimeStr.Split(new []{'-'},StringSplitOptions.RemoveEmptyEntries);
-            TimeSpan startTime = TimeSpan.Parse(startTimeStrs[0]);
-            TimeSpan endTime = TimeSpan.Parse(startTimeStrs[1]);
+        //private List<TrainItemInfo> Filter(List<TrainItemInfo> querylist)
+        //{
+        //    var result = new List<TrainItemInfo>();
+        //    BuyTicketConfig buyTicketConfig = ConfigFileManager.GetConfig<BuyTicketConfig>();
+        //    string trainClass =buyTicketConfig .OrderRequest.TrainClass;
+        //    string[] startTimeStrs = buyTicketConfig.OrderRequest.StartTimeStr.Split(new []{'-'},StringSplitOptions.RemoveEmptyEntries);
+        //    TimeSpan startTime = TimeSpan.Parse(startTimeStrs[0]);
+        //    TimeSpan endTime = TimeSpan.Parse(startTimeStrs[1]);
            
-            foreach (var trainItemInfo in querylist)
-            {
-                string pc = trainItemInfo.TrainNo.Substring(0, 1);
-                if (string.IsNullOrEmpty(trainClass) || trainClass.Contains(pc + ",") ||
-                    (trainClass.Contains("QT,") && pc[0] >= '0' && pc[0] <= '9'))
-                {
-                     TimeSpan timeSpan =TimeSpan.Parse(trainItemInfo.TrainStartTime);
-                    if (timeSpan >= startTime && timeSpan <= endTime)
-                    {
-                        result.Add(trainItemInfo);
-                    }
-                }
-            }
-            return result;
-        }
+        //    foreach (var trainItemInfo in querylist)
+        //    {
+        //        string pc = trainItemInfo.TrainNo.Substring(0, 1);
+        //        if (string.IsNullOrEmpty(trainClass) || trainClass.Contains(pc + ",") ||
+        //            (trainClass.Contains("QT,") && pc[0] >= '0' && pc[0] <= '9'))
+        //        {
+        //             TimeSpan timeSpan =TimeSpan.Parse(trainItemInfo.TrainStartTime);
+        //            if (timeSpan >= startTime && timeSpan <= endTime)
+        //            {
+        //                result.Add(trainItemInfo);
+        //            }
+        //        }
+        //    }
+        //    return result;
+        //}
         
 
         private Mp3 soundPlayer;
@@ -850,7 +849,7 @@ namespace LFNet.TrainTicket
         /// <param name="e"></param>
         private void btnLogin_Click(object sender, EventArgs e)
         {
-            this.client.Account.SaveConfig();
+            this.client.Account.Save();
             this.client.Login();
            
         }
@@ -897,6 +896,19 @@ namespace LFNet.TrainTicket
         private void Client_LoginStateChanged(object sender, ClientEventArgs<LoginState> e)
         {
             this.Log(e.State.ToString());
+        }
+
+        private void tbUsername_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (tbUsername.Text.Trim().Length > 4)
+            {
+                AccountInfo accountInfo = AccountManager.GetAccountInfo(tbUsername.Text.Trim());
+                if (accountInfo != null)
+                {
+                    this.client.Account = accountInfo;
+                    this.accountInfoBindingSource.DataSource = this.client.Account;
+                }
+            }
         }
     }
 }

@@ -58,17 +58,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionUrls.cs" />
+    <Compile Include="BLL\AccountManager.cs" />
+    <Compile Include="Config\SystemConfig.cs" />
     <Compile Include="Entity\AccountInfo.cs" />
     <Compile Include="BLL\Client.cs" />
     <Compile Include="BLL\ClientEventArgs.cs" />
     <Compile Include="BLL\ExcuteState.cs" />
     <Compile Include="Common\Cracker.cs" />
-    <Compile Include="Config\PayType.cs" />
     <Compile Include="DAL\DynamicJsResult.cs" />
     <Compile Include="Entity\CardType.cs" />
-    <Compile Include="Config\BuyMode.cs" />
-    <Compile Include="Config\BuyTicketConfig.cs" />
-    <Compile Include="Config\OrderRequest.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Common\HttpMethod.cs" />
     <Compile Include="Common\HttpRequest.cs" />
@@ -102,7 +100,6 @@
     <Compile Include="TextValue.cs" />
     <Compile Include="Entity\TicketType.cs" />
     <Compile Include="AutoVCodeType.cs" />
-    <Compile Include="Config\TicketSetting.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Tools\VCodeForm.cs">
       <SubType>Form</SubType>

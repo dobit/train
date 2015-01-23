@@ -9,12 +9,19 @@ namespace LFNet.TrainTicket.Entity
     public class AccountInfo
     {
         private DateTime _backTrainDate;
+        private string _startTimeStr = "00:00--23:59";
+        private DateTime _trainDate=DateTime.Now.Date;
         public string Username { get;  set; }
         public string Password { get;  set; }
+
         /// <summary>
         /// 上车日期
         /// </summary>
-        public DateTime TrainDate { get; set; }
+        public DateTime TrainDate
+        {
+            get { return _trainDate; }
+            set { _trainDate = value; }
+        }
 
         /// <summary>
         /// 返程日期
@@ -30,6 +37,32 @@ namespace LFNet.TrainTicket.Entity
                 return _backTrainDate;
             }
             set { _backTrainDate = value; }
+        }
+        /// <summary>
+        /// 初始站信息
+        /// </summary>
+        [XmlIgnore]
+        public StationInfo ToStationInfo
+        {
+            get { return new StationInfo() { Name = ToStation, Code = ToStationTeleCode }; }
+            set
+            {
+                ToStation = value.Name;
+                ToStationTeleCode = value.Code;
+            }
+        }
+        /// <summary>
+        /// 起始站信息
+        /// </summary>
+         [XmlIgnore]
+        public StationInfo FromStationInfo
+        {
+            get { return new StationInfo() {Name = FromStation, Code = FromStationTeleCode}; }
+            set
+            {
+                FromStation = value.Name;
+                FromStationTeleCode = value.Code;
+            }
         }
 
         /// <summary>
@@ -54,10 +87,14 @@ namespace LFNet.TrainTicket.Entity
         /// <summary>
         /// 开车时范围
         /// </summary>
-        public string StartTimeStr { get; set; }
+        public string StartTimeStr
+        {
+            get { return _startTimeStr; }
+            set { _startTimeStr = value; }
+        }
 
         /// <summary>
-        /// 勾选的乘客，逗号分隔身份证号码
+        /// 勾选的乘客，逗号分隔姓名
         /// </summary>
         public string Passengers { get; set; }
         /// <summary>
