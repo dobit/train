@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.IO;
 using LFNet.Configuration;
 using LFNet.TrainTicket.Entity;
@@ -32,7 +32,7 @@ namespace LFNet.TrainTicket.BLL
         }
 
         /// <summary>
-        /// ±£¥Ê
+        /// ‰øùÂ≠ò
         /// </summary>
         /// <param name="accountInfo"></param>
         public static void Save(this AccountInfo accountInfo)

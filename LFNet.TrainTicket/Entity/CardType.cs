@@ -1,14 +1,14 @@
-namespace LFNet.TrainTicket.Entity
+ï»¿namespace LFNet.TrainTicket.Entity
 {
     /// <summary>
-    /// Ö¤¼şÀàĞÍ
+    /// è¯ä»¶ç±»å‹
     /// </summary>
     public enum CardType
     {
-        ¶ş´úÉí·İÖ¤='1',
-        Ò»´úÉí·İÖ¤='2',
-        ¸Û°ÄÍ¨ĞĞÖ¤='C',
-        Ì¨ÍåÍ¨ĞĞÖ¤='G',
-        »¤ÕÕ='B'
+        äºŒä»£èº«ä»½è¯='1',
+        ä¸€ä»£èº«ä»½è¯='2',
+        æ¸¯æ¾³é€šè¡Œè¯='C',
+        å°æ¹¾é€šè¡Œè¯='G',
+        æŠ¤ç…§='B'
     }
 }

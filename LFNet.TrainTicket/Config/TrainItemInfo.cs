@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.ComponentModel;
 using LFNet.Common;
 using LFNet.TrainTicket.Entity;
@@ -9,54 +9,54 @@ namespace LFNet.TrainTicket.Config
     {
         private string _ypInfoDetail;
 
-        [DisplayName("±àºÅ")]
+        [DisplayName("ç¼–å·")]
         public string No { get; set; }
-        [DisplayName("³µ´Î")]
+        [DisplayName("è½¦æ¬¡")]
         public string TrainNo { get; set; }
 
-        [DisplayName("·¢Õ¾")]
+        [DisplayName("å‘ç«™")]
         public string StartStation { get; set; }
 
-        [DisplayName("µ½Õ¾")]
+        [DisplayName("åˆ°ç«™")]
         public string EndStation { get; set; }
 
-        [DisplayName("ÀúÊ±")]
+        [DisplayName("å†æ—¶")]
         public string lishi { get; set; }
 
         /// <summary>
-        /// ÉÌÎñ×ù
+        /// å•†åŠ¡åº§
         /// </summary>
-        [DisplayName("ÉÌÎñ×ù")]
+        [DisplayName("å•†åŠ¡åº§")]
         public string swz_num { get; set; }
 
-        [DisplayName("ÌØµÈ×ù")]
+        [DisplayName("ç‰¹ç­‰åº§")]
         public string tz_num { get; set; }
 
-        [DisplayName("Ò»µÈ×ù")]
+        [DisplayName("ä¸€ç­‰åº§")]
         public string zy_num { get; set; }
 
-        [DisplayName("¶şµÈ×ù")]
+        [DisplayName("äºŒç­‰åº§")]
         public string ze_num { get; set; }
 
-        [DisplayName("¸ß¼¶ÈíÎÔ")]
+        [DisplayName("é«˜çº§è½¯å§")]
         public string gr_num { get; set; }
 
-        [DisplayName("ÈíÎÔ")]
+        [DisplayName("è½¯å§")]
         public string rw_num { get; set; }
 
-        [DisplayName("Ó²ÎÔ")]
+        [DisplayName("ç¡¬å§")]
         public string yw_num { get; set; }
 
-        [DisplayName("Èí×ù")]
+        [DisplayName("è½¯åº§")]
         public string rz_num { get; set; }
 
-        [DisplayName("Ó²×ù")]
+        [DisplayName("ç¡¬åº§")]
         public string yz_num { get; set; }
 
-        [DisplayName("ÎŞ×ù")]
+        [DisplayName("æ— åº§")]
         public string wz_num { get; set; }
 
-        [DisplayName("ÆäËû")]
+        [DisplayName("å…¶ä»–")]
         public string qt_num { get; set; }
 
        
@@ -93,12 +93,12 @@ namespace LFNet.TrainTicket.Config
         public string ToStationTelecode { get; set; }
 
         /// <summary>
-        /// ÊÇ·ñ¿ÉÒÔ¹ºÂò
+        /// æ˜¯å¦å¯ä»¥è´­ä¹°
         /// </summary>
         public bool CanBuy { get { return !string.IsNullOrEmpty(MmStr); } }
 
         /// <summary>
-        /// ÕæÊµµÄÓàÆ±ĞÅÏ¢
+        /// çœŸå®çš„ä½™ç¥¨ä¿¡æ¯
         /// </summary>
         public string YpInfoDetailReal { get; set; }
 
@@ -117,7 +117,7 @@ namespace LFNet.TrainTicket.Config
         }
 
         /// <summary>
-        /// ¸ù¾İ×øÎ»ÀàĞÍ»ñÈ¡Æ±Êı
+        /// æ ¹æ®åä½ç±»å‹è·å–ç¥¨æ•°
         /// </summary>
         /// <param name="seatTypeStr"></param>
         /// <returns></returns>
@@ -127,37 +127,37 @@ namespace LFNet.TrainTicket.Config
             string numStr = "";
             switch (seatType)
             {
-                case SeatType.Ó²×ù:
+                case SeatType.ç¡¬åº§:
                     numStr = yz_num;
                     break;
-                case SeatType.Èí×ù:
+                case SeatType.è½¯åº§:
                     numStr = rz_num;
                     break;
-                case SeatType.Ó²ÎÔ:
+                case SeatType.ç¡¬å§:
                     numStr = yw_num;
                     break;
-                case SeatType.ÈíÎÔ:
+                case SeatType.è½¯å§:
                     numStr = rw_num;
                     break;
-                case SeatType.¸ß¼¶ÈíÎÔ:
+                case SeatType.é«˜çº§è½¯å§:
                     numStr = gr_num;
                     break;
-                case SeatType.ÉÌÎñ×ù:
+                case SeatType.å•†åŠ¡åº§:
                     numStr = swz_num;
                     break;
-                case SeatType.Ò»µÈ×ù:
+                case SeatType.ä¸€ç­‰åº§:
                     numStr = zy_num;
                     break;
-                case SeatType.¶şµÈ×ù:
+                case SeatType.äºŒç­‰åº§:
                     numStr = ze_num;
                     break;
-                case SeatType.ÌØµÈ×ù:
+                case SeatType.ç‰¹ç­‰åº§:
                     numStr = tz_num;
                     break;
-                case SeatType.¹Û¹â×ù:
+                case SeatType.è§‚å…‰åº§:
                     return 0;
                     break;
-                case SeatType.Ò»µÈ°ü×ù:
+                case SeatType.ä¸€ç­‰åŒ…åº§:
                     return 0;
                     break;
                 default:
@@ -166,7 +166,7 @@ namespace LFNet.TrainTicket.Config
                     break;
             }
 
-            if(numStr=="ÓĞ")
+            if(numStr=="æœ‰")
             {
                 return int.MaxValue;
             }
@@ -183,7 +183,7 @@ namespace LFNet.TrainTicket.Config
         }
 
         /// <summary>
-        /// ÀúÊ±
+        /// å†æ—¶
         /// </summary>
         public TimeSpan TripTime
         {
@@ -216,7 +216,7 @@ namespace LFNet.TrainTicket.Config
         public string ToStationNo { get; set; }
 
         /// <summary>
-        /// ½«ÓàÆ±ĞÅÏ¢½âÎö³É¾ßÌåµÄ×ùÎ»Êı
+        /// å°†ä½™ç¥¨ä¿¡æ¯è§£ææˆå…·ä½“çš„åº§ä½æ•°
         /// </summary>
         public void ParseYpDetail()
         {
@@ -235,37 +235,37 @@ namespace LFNet.TrainTicket.Config
 
                     switch (c_seat)
                     {
-                        case SeatType.Ó²×ù:
+                        case SeatType.ç¡¬åº§:
                             yz_num = numStr;
                             break;
-                        case SeatType.Èí×ù:
+                        case SeatType.è½¯åº§:
                             rz_num = numStr;
                             break;
-                        case SeatType.Ó²ÎÔ:
+                        case SeatType.ç¡¬å§:
                             yw_num = numStr;
                             break;
-                        case SeatType.ÈíÎÔ:
+                        case SeatType.è½¯å§:
                             rw_num = numStr;
                             break;
-                        case SeatType.¸ß¼¶ÈíÎÔ:
+                        case SeatType.é«˜çº§è½¯å§:
                             gr_num = numStr;
                             break;
-                        case SeatType.ÉÌÎñ×ù:
+                        case SeatType.å•†åŠ¡åº§:
                             swz_num = numStr;
                             break;
-                        case SeatType.Ò»µÈ×ù:
+                        case SeatType.ä¸€ç­‰åº§:
                             zy_num = numStr;
                             break;
-                        case SeatType.¶şµÈ×ù:
+                        case SeatType.äºŒç­‰åº§:
                             ze_num = numStr;
                             break;
-                        case SeatType.ÌØµÈ×ù:
+                        case SeatType.ç‰¹ç­‰åº§:
                             tz_num = numStr;
                             break;
-                        case SeatType.¹Û¹â×ù:
+                        case SeatType.è§‚å…‰åº§:
 
                             break;
-                        case SeatType.Ò»µÈ°ü×ù:
+                        case SeatType.ä¸€ç­‰åŒ…åº§:
                             break;
 
                         default:
@@ -282,7 +282,7 @@ namespace LFNet.TrainTicket.Config
         }
 
         /// <summary>
-        /// »ñÈ¡×ùÎ»µÄÓàÆ±ĞÅÏ¢
+        /// è·å–åº§ä½çš„ä½™ç¥¨ä¿¡æ¯
         /// </summary>
         /// <param name="seatType"></param>
         /// <returns></returns>
@@ -307,7 +307,7 @@ namespace LFNet.TrainTicket.Config
                 }
                 i += 10; 
             }
-            if(seatType==SeatType.ÎŞ×ù) return wz;
+            if(seatType==SeatType.æ— åº§) return wz;
             else
             {
                 return 0;

@@ -15,6 +15,7 @@ namespace LFNet.TrainTicket.Config
        private int _randCodeWaitSeconds=5;//5秒
        private int _clickWaitSeconds=5;
         private int _queryWaitSeconds=5;
+        private int _randCodeCheckWaitSeconds=5;
 
         /// <summary>
        /// 验证码输入等待秒数
@@ -38,6 +39,15 @@ namespace LFNet.TrainTicket.Config
         {
             get { return _queryWaitSeconds; }
             set { _queryWaitSeconds = value; }
+        }
+
+        /// <summary>
+        /// 验证码获取到验证码验证的间隔
+        /// </summary>
+        public int RandCodeCheckWaitSeconds
+        {
+            get { return _randCodeCheckWaitSeconds; }
+            set { _randCodeCheckWaitSeconds = value; }
         }
     }
 }

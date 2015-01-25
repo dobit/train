@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LFNet.Common;
+using LFNet.Configuration;
 using LFNet.TrainTicket.Config;
 using LFNet.TrainTicket.DAL;
 using LFNet.TrainTicket.Entity;
@@ -157,8 +160,16 @@ namespace LFNet.TrainTicket.BLL
         /// Cookie信息
         /// </summary>
         public CookieContainer Cookie { get; private set; }
-       
 
+        /// <summary>
+        /// 下单模式
+        /// </summary>
+        public bool SubmitOrderMode { get; set; }
+
+        /// <summary>
+        /// 强制下单
+        /// </summary>
+        public bool ForceOrder { get; set; }
         #endregion
 
         #region ctor
@@ -187,21 +198,34 @@ namespace LFNet.TrainTicket.BLL
         {
             this._stop = false;
             this.ExcuteState = ExcuteState.Running;
+            do
+            {
+                var login = await Login();
+                if (login)
+                {
+                    Info("登陆成功");
+                    break;
+                } 
+            } while (!_stop);
             //登陆
-            var login = await Login();
 
+           
             
             //查询余票
         QueryTickets:
-           await QueryLeftTicket();
+         var query=  await QueryLeftTicket();
+            if (query)
+            {
+                Info("查询成功");
+            }
            var list = Filter(TrainInfos);
             if (list.Count > 0)
             {
                 //display infomation
                 Info(list.ToDisplayString());
 
-                int needSeatNumber = this.Passengers.Count(p => p.Checked);// Account.Passengers.Split(new []{','},StringSplitOptions.RemoveEmptyEntries).Length;//需要的票数
-
+                int needSeatNumber = this.Passengers.Count(p => p.Checked);
+                
                 foreach (string seatTypeStr in Account.SeatOrder.Split(','))
                 {
                     //有效的列车
@@ -214,7 +238,7 @@ namespace LFNet.TrainTicket.BLL
                         {
                             validTrainItemInfos.Add(trainItemInfo);
                         }
-                        else if (!string.IsNullOrEmpty(trainItemInfo.MmStr)) //cbForce.Checked &&是否强制下单
+                        else if (!string.IsNullOrEmpty(trainItemInfo.MmStr)&&ForceOrder) //cbForce.Checked &&是否强制下单
                         {
                             // Log(account, string.Format("{0}，对" + trainItemInfo.TrainNo + " 强制下单", seatTypeStr));
                             validTrainItemInfos.Add(trainItemInfo);
@@ -225,7 +249,8 @@ namespace LFNet.TrainTicket.BLL
 
                     //todo:事件 播放音乐
                     OnAlarm(new ClientEventArgs("有可订的车次"));
-                    Info(string.Format("{0}，找到" + validTrainItemInfos.Count + "趟列车", seatTypeStr));
+
+                    Info(string.Format("{0}，需{1}张,找到" + validTrainItemInfos.Count + "趟车", seatTypeStr, needSeatNumber));
                       List<TrainItemInfo> optimizeTrains = validTrainItemInfos.OrderBy(p => (int)p.TripTime.TotalHours).ThenByDescending(p => p.GetSeatNumber(seatType)).ToList(); //这么排序不是会买到临客？
                                 Info(string.Format("{0}，最优顺序为：{1}", seatTypeStr, string.Join(",", optimizeTrains.Select(p => p.TrainNo))));
                     foreach (TrainItemInfo optimizeTrain in optimizeTrains)
@@ -234,116 +259,35 @@ namespace LFNet.TrainTicket.BLL
                        
                         Passenger[] passengers =this.Passengers.Where(p=>p.Checked).ToArray();//.Where(p=>Account.Passengers.Contains(p.code)).ToArray();
 
-                        Thread.Sleep(10000);//鼠标单击等待
-
-                        SubmitOrderRequest:
-                        //检查用户状态
-                        Response<CheckUserResponse> response = await this.CheckUser();
-                        if (!response.data.flag) //失败则再登录
+                        //设置cookie
+                        DateTime expires = DateTime.Now.AddDays(365);
+                        var clientCollection = new CookieCollection()
+            {
+                //new client("_jc_save_czxxcx_toStation",""),
+                //new client("_jc_save_czxxcx_fromDate","2014-12-25"),
+                new Cookie("_jc_save_fromStation",StringToUnicode(Account.FromStation)+"%2C"+Account.FromStationTeleCode){Expires = expires },
+                new Cookie("_jc_save_toStation",StringToUnicode(Account.ToStation)+"%2C"+Account.ToStationTeleCode){Expires = expires },
+                new Cookie("_jc_save_fromDate",Account.TrainDate.ToString("yyyy-MM-dd")){Expires = expires },
+                new Cookie("_jc_save_toDate",Account.BackTrainDate.ToString("yyyy-MM-dd")){Expires = expires },
+                new Cookie("_jc_save_wfdc_flag","dc"){Expires = expires },
+                 new Cookie("_jc_save_showZtkyts","true"){Expires = expires },
+            };
+                        Cookie.Add(new Uri(ActionUrls.TicketHomePage), clientCollection);
+                        //if自动提交
+                        if (await AutoSumbmitOrder(optimizeTrain, passengers, seatType, _queryPageDynamicJsResult)) //成功
                         {
-                            Info( "需要重新登录");
-                            LoginState = LoginState.UnLogin;
-                            await Login();
-                        }
-                        //提交查询
-                        var submitOrder =await this.SubmitOrderRequest(optimizeTrain.MmStr,_queryPageDynamicJsResult,Account);
-                        if (!submitOrder.status)//提交不成功
-                        {
-                            Info(submitOrder.messages[0].ToString());
-                            continue;
-                        }
-
-                        //跳转到订单页面
-                        InitDcResult initDcResult = await this.GetInitDc();
-                        //调用获取用户信息
-                        Task<bool> refreshPassengers = this.RefreshPassengers(initDcResult.RepeatSubmitToken);
-
-                        //获取提交的验证码
-                        string randCode = await GetRandCode(1);
-
-                       await refreshPassengers; //等待刷新乘客信息完成
-                        if (!string.IsNullOrEmpty(initDcResult.LeftTicketStr)) //更新余票串
-                        optimizeTrain.YpInfoDetailReal = initDcResult.LeftTicketStr;
-                        if (string.IsNullOrEmpty(optimizeTrain.YpInfoDetailReal))
-                        {
-                            Info( "下单失败:未能获取真实的余票串信息");
-                            continue;
-                        }
-                        //提交的座位
-                       var seatTypev = seatType == SeatType.无座 ? SeatType.硬座 : seatType;
-                       Task<Response<CheckOrderInfoResponse>> checkOrderInfoAsync = this.CheckOrderInfoAsync(passengers, seatTypev, randCode, initDcResult);
-                        Response<GetQueueCountResponse> queueCount = await this.GetQueueCount(Account.TrainDate, optimizeTrain, initDcResult.LeftTicketStr,
-                            initDcResult.RepeatSubmitToken, seatType);
-                        var checkOrderInfo = await checkOrderInfoAsync;
-                        if (!checkOrderInfo.status)
-                        {
-                            Info(checkOrderInfo.messages[0].ToString());
-
-                        }
-                        int seatNum = Utils.GetRealSeatNumber(queueCount.data.ticket, seatTypev);
-                        int wuzuo = 0;
-                        if (seatType == SeatType.硬座)
-                            wuzuo = Utils.GetRealSeatNumber(queueCount.data.ticket, SeatType.无座);
-                        Info(string.Format("{0},排队{1}人,{2} {3} 张 {4}", optimizeTrain.TrainNo, queueCount.data.countT, seatType, seatNum, wuzuo == 0 ? "" : ",无座 " + wuzuo + " 张"));
-
-                        var resYpInfo = queueCount.data;
-                        if (seatType == SeatType.硬座)//硬座要防止买到无座的票
-                        {
-                            if (seatNum - resYpInfo.countT < passengers.Length) //余票不足
-                            {
-                                Info(optimizeTrain.TrainNo + " ,硬座 余票不足！");
-                                //if (cbShowRealYp.Checked) //查询余票开启
-                                //{
-                                //    Info(optimizeTrain.TrainNo + " ,持续检查余票开启");
-                                //    Thread.Sleep(1000);
-                                //    goto CheckOrderInfo;
-                                //}
-                                continue;
-                            }
-
-                        }
-                        else
-                        {
-                            if (seatNum < passengers.Length) //小于座位数
-                            {
-                                Info(optimizeTrain.TrainNo + " ,余票不足！");
-
-                                //todo:当余票不足是否下单？
-                                continue;
-                                //if (!cbForce.Checked) //强制下单
-                                //{
-                                //    if (cbShowRealYp.Checked) //持续检查余票
-                                //    {
-                                //        Log(account, optimizeTrain.TrainNo + " ,持续检查余票开启");
-                                //        Thread.Sleep(1000);
-                                //        goto CheckOrderInfo;
-                                //    }
-                                //    continue;
-                                //}
-                                //Log(account, optimizeTrain.TrainNo + " ,强制下单开启！");
-                            }
+                            return;
                         }
 
-                        //下单
-                        var confirmSingleForQueue = await this.ConfirmSingleForQueue(passengers, seatTypev, randCode, initDcResult,
-                            optimizeTrain.LocationCode);
-                        if (!confirmSingleForQueue.status || ! confirmSingleForQueue.data.submitStatus) //下单成功
-                        {
-                            Info(confirmSingleForQueue.messages[0].ToString());
-                            continue;
-                        }
-                        Info( optimizeTrain.TrainNo + "下单成功");
-
-                        //检查等待时间
-                        do
-                        {
-                            Response<QueryOrderWaitTimeResponse> waitTimeResponse =
-                                await this.QueryOrderWaitTime(initDcResult.RepeatSubmitToken);
-
-                            Thread.Sleep(waitTimeResponse.data.waitTime*1000);
-
-                        } while (!_stop);
-
+                        //todo:
+                        ////非自动提交
+                        //if (await SubmitOrder(optimizeTrain, seatType, passengers)) //成功
+                        //{
+                        //    return ;
+                        //}
+                        _queryPageDynamicJsResult = null;
+                        _queryPageTime = DateTime.Now.AddHours(-1);
+                        await  QueryLeftTicket();
                     }
 
                 }
@@ -351,6 +295,8 @@ namespace LFNet.TrainTicket.BLL
 
             if (!_stop)
             {
+                Info("" + ConfigFileManager.GetConfig<SystemConfig>().QueryWaitSeconds+"s 继续查询");
+                Thread.Sleep(ConfigFileManager.GetConfig<SystemConfig>().QueryWaitSeconds*1000);
                 goto QueryTickets;
             }
 
@@ -358,6 +304,245 @@ namespace LFNet.TrainTicket.BLL
 
             this._stop = true;
             this.ExcuteState = ExcuteState.Stopped;
+        }
+
+        /// <summary>
+        /// 普通下单模式 进入下单页面提交 
+        /// </summary>
+        /// <param name="optimizeTrain"></param>
+        /// <param name="seatType"></param>
+        /// <param name="passengers"></param>
+        /// <returns>下单购票成功返回true，否则false</returns>
+        private async Task<bool> SubmitOrder(TrainItemInfo optimizeTrain, SeatType seatType, Passenger[] passengers)
+        {
+            Thread.Sleep(10000); //鼠标单击等待
+
+            SubmitOrderRequest:
+            //检查用户状态
+            Response<CheckUserResponse> response = await this.CheckUser();
+            if (!response.data.flag) //失败则再登录
+            {
+                Info("需要重新登录");
+                LoginState = LoginState.UnLogin;
+                await Login();
+            }
+            //提交查询
+            var submitOrder = await this.SubmitOrderRequest(optimizeTrain.MmStr, _queryPageDynamicJsResult, Account);
+            if (!submitOrder.status) //提交不成功
+            {
+                Info(submitOrder.messages[0].ToString());
+                return false;
+            }
+
+            //跳转到订单页面
+            InitDcResult initDcResult = await this.GetInitDc();
+            //调用获取用户信息
+            Task<bool> refreshPassengers = this.RefreshPassengers(initDcResult.RepeatSubmitToken);
+
+            //获取提交的验证码
+            string randCode = await GetRandCode(1);
+
+            await refreshPassengers; //等待刷新乘客信息完成
+            if (!string.IsNullOrEmpty(initDcResult.LeftTicketStr)) //更新余票串
+                optimizeTrain.YpInfoDetailReal = initDcResult.LeftTicketStr;
+            if (string.IsNullOrEmpty(optimizeTrain.YpInfoDetailReal))
+            {
+                Info("下单失败:未能获取真实的余票串信息");
+                return false;
+            }
+            //提交的座位
+            var seatTypev = seatType == SeatType.无座 ? SeatType.硬座 : seatType;
+            Task<Response<CheckOrderInfoResponse>> checkOrderInfoAsync = this.CheckOrderInfoAsync(passengers, seatTypev,
+                randCode, initDcResult);
+            Response<GetQueueCountResponse> queueCount =
+                await this.GetQueueCount(Account.TrainDate, optimizeTrain, initDcResult.LeftTicketStr,
+                    initDcResult.RepeatSubmitToken, seatType);
+            var checkOrderInfo = await checkOrderInfoAsync;
+            if (!checkOrderInfo.status)
+            {
+                Info(checkOrderInfo.messages[0].ToString());
+            }
+            int seatNum = Utils.GetRealSeatNumber(queueCount.data.ticket, seatTypev);
+            int wuzuo = 0;
+            if (seatType == SeatType.硬座)
+                wuzuo = Utils.GetRealSeatNumber(queueCount.data.ticket, SeatType.无座);
+            Info(string.Format("{0},排队{1}人,{2} {3} 张 {4}", optimizeTrain.TrainNo, queueCount.data.countT, seatType, seatNum,
+                wuzuo == 0 ? "" : ",无座 " + wuzuo + " 张"));
+
+            var resYpInfo = queueCount.data;
+            if (seatType == SeatType.硬座) //硬座要防止买到无座的票
+            {
+                if (seatNum - resYpInfo.countT < passengers.Length) //余票不足
+                {
+                    Info(optimizeTrain.TrainNo + " ,硬座 余票不足！");
+                    //if (cbShowRealYp.Checked) //查询余票开启
+                    //{
+                    //    Info(optimizeTrain.TrainNo + " ,持续检查余票开启");
+                    //    Thread.Sleep(1000);
+                    //    goto CheckOrderInfo;
+                    //}
+                    return false;
+                }
+            }
+            else
+            {
+                if (seatNum < passengers.Length) //小于座位数
+                {
+                    Info(optimizeTrain.TrainNo + " ,余票不足！");
+
+                    //todo:当余票不足是否下单？
+                    return false;
+                    //if (!cbForce.Checked) //强制下单
+                    //{
+                    //    if (cbShowRealYp.Checked) //持续检查余票
+                    //    {
+                    //        Log(account, optimizeTrain.TrainNo + " ,持续检查余票开启");
+                    //        Thread.Sleep(1000);
+                    //        goto CheckOrderInfo;
+                    //    }
+                    //    continue;
+                    //}
+                    //Log(account, optimizeTrain.TrainNo + " ,强制下单开启！");
+                }
+            }
+
+            //下单
+            var confirmSingleForQueue = await this.ConfirmSingleForQueue(passengers, seatTypev, randCode, initDcResult,
+                optimizeTrain.LocationCode);
+            if (!confirmSingleForQueue.status || ! confirmSingleForQueue.data.submitStatus) //下单成功
+            {
+                Info(confirmSingleForQueue.messages[0].ToString());
+                return false;
+            }
+            Info(optimizeTrain.TrainNo + "下单成功");
+
+            //检查等待时间
+            do
+            {
+                Response<QueryOrderWaitTimeResponse> waitTimeResponse =
+                    await this.QueryOrderWaitTime(initDcResult.RepeatSubmitToken);
+                if (waitTimeResponse.status && string.IsNullOrEmpty(waitTimeResponse.data.orderId))
+                {
+                    Info("购票成功：订单号" + waitTimeResponse.data.orderId);
+                    //出发事件
+
+                    this.Stop();
+                    return true;
+                }
+                Thread.Sleep(waitTimeResponse.data.waitTime*1000);
+            } while (!_stop);
+            return false;
+        }
+
+        /// <summary>
+        /// 自动下单模式 不进入下单页面提交
+        /// </summary>
+        /// <param name="optimizeTrain"></param>
+        /// <param name="passengers"></param>
+        /// <param name="seatType"></param>
+        /// <param name="queryPageDynamicJsResult"></param>
+        /// <returns></returns>
+        private async Task<bool> AutoSumbmitOrder(TrainItemInfo optimizeTrain,Passenger[] passengers,SeatType seatType,DynamicJsResult queryPageDynamicJsResult)
+        {
+            //提交订单
+            var response = await this.AutoSubmitOrderRequest(optimizeTrain.MmStr, seatType, queryPageDynamicJsResult, this.Account);
+            if (response.data==null|| !response.data.submitStatus)
+            {
+                Info(response.messages[0].ToString());
+                return false;
+            }
+            string[] results = response.data.result.Split('#');
+            InitDcResult initDcResult=new InitDcResult(){KeyCheckIsChange=results[1],LeftTicketStr=results[2]};
+            if (!string.IsNullOrEmpty(initDcResult.LeftTicketStr)) //更新余票串
+                optimizeTrain.YpInfoDetailReal = initDcResult.LeftTicketStr;
+            if (string.IsNullOrEmpty(optimizeTrain.YpInfoDetailReal))
+            {
+                Info("下单失败:未能获取真实的余票串信息");
+                return false;
+            }
+
+            var seatTypev = seatType == SeatType.无座 ? SeatType.硬座 : seatType;
+
+            var getQueueCountResponseTask = this.GetQueueCountAsync(Account.TrainDate, optimizeTrain, initDcResult.LeftTicketStr, seatTypev);
+
+
+            //获取提交的验证码
+            string randCode = await GetRandCode(2);
+
+            Response<GetQueueCountResponse> queueCount = await getQueueCountResponseTask;
+            int seatNum = Utils.GetRealSeatNumber(queueCount.data.ticket, seatTypev);
+            int wuzuo = 0;
+            if (seatType == SeatType.硬座)
+                wuzuo = Utils.GetRealSeatNumber(queueCount.data.ticket, SeatType.无座);
+            Info(string.Format("{0},排队{1}人,{2} {3} 张 {4}", optimizeTrain.TrainNo, queueCount.data.countT, seatType, seatNum, wuzuo == 0 ? "" : ",无座 " + wuzuo + " 张"));
+
+            var resYpInfo = queueCount.data;
+            if (seatType == SeatType.硬座)//硬座要防止买到无座的票
+            {
+                if (seatNum - resYpInfo.countT < passengers.Count()) //余票不足
+                {
+                    Info(optimizeTrain.TrainNo + " ,硬座 余票不足！");
+                    //if (cbShowRealYp.Checked) //查询余票开启
+                    //{
+                    //    Info(optimizeTrain.TrainNo + " ,持续检查余票开启");
+                    //    Thread.Sleep(1000);
+                    //    goto CheckOrderInfo;
+                    //}
+                    return false;
+                }
+
+            }
+            else
+            {
+                if (seatNum < passengers.Length) //小于座位数
+                {
+                    Info(optimizeTrain.TrainNo + " ,余票不足！");
+
+                    //todo:当余票不足是否下单？
+                    return false;
+                    //if (!cbForce.Checked) //强制下单
+                    //{
+                    //    if (cbShowRealYp.Checked) //持续检查余票
+                    //    {
+                    //        Log(account, optimizeTrain.TrainNo + " ,持续检查余票开启");
+                    //        Thread.Sleep(1000);
+                    //        goto CheckOrderInfo;
+                    //    }
+                    //    continue;
+                    //}
+                    //Log(account, optimizeTrain.TrainNo + " ,强制下单开启！");
+                }
+            }
+            //下单
+            Response<ConfirmSingleForQueueResponse> confirmSingleForQueue = await
+                this.ConfirmSingleForQueueAsys(passengers, seatType, randCode, initDcResult, optimizeTrain.LocationCode);
+
+            if (!confirmSingleForQueue.status || confirmSingleForQueue.data == null) //下单成功
+            {
+                Info(confirmSingleForQueue.messages[0].ToString());
+                return false;
+            }
+            if ( confirmSingleForQueue.data.submitStatus == false)
+            {
+                Info(confirmSingleForQueue.data.errMsg);
+                return false;
+            }
+            Info(optimizeTrain.TrainNo + "下单成功");
+
+            //检查等待时间
+            do
+            {
+                Response<QueryOrderWaitTimeResponse> waitTimeResponse =
+                    await this.QueryOrderWaitTime(initDcResult.RepeatSubmitToken);
+                if (waitTimeResponse.status && string.IsNullOrEmpty(waitTimeResponse.data.orderId))
+                {
+                    Info("购票成功：订单号" + waitTimeResponse.data.orderId);
+                    return true;
+                }
+                Thread.Sleep(waitTimeResponse.data.waitTime * 1000);
+
+            } while (!_stop);
+            return false;
         }
 
         /// <summary>
@@ -386,7 +571,7 @@ namespace LFNet.TrainTicket.BLL
 
             var randCode = await GetRandCode();
 
-            Thread.Sleep(5000); //单击等待
+            //Thread.Sleep(5000); //单击等待
             Response<LoginAysnSuggestResponse> response =
                 await
                     this.LoginAsynSuggest(this.Account.Username, this.Account.Password, randCode, loginPageResult.DynamicJsResult.Key, loginPageResult.DynamicJsResult.Value);
@@ -396,6 +581,7 @@ namespace LFNet.TrainTicket.BLL
                 LoginState = LoginState.Login;
                 //刷新乘客信息
                 Task<bool> refreshPassengers = RefreshPassengers();
+                await refreshPassengers;
                 return true;
             }
             else
@@ -417,7 +603,7 @@ namespace LFNet.TrainTicket.BLL
         /// <returns></returns>
         public async Task<bool> RefreshPassengers(string submitToken = "")
         {
-            OpenQueryPage();
+           await OpenQueryPage();
             Response<GetPassengerDTOs> response = await this.GetPassengers(submitToken);
 
             if (response.data != null)
@@ -463,7 +649,8 @@ namespace LFNet.TrainTicket.BLL
 
         public async Task<bool> QueryLeftTicket()
         {
-            OpenQueryPage();
+            await  OpenQueryPage();
+            this.QueryTLog(Account.TrainDate, Account.FromStationTeleCode, Account.ToStationTeleCode, Account.TicketType);
             Response<QueryResponse> response = await this.QueryTrainInfos(Account.TrainDate, Account.FromStationTeleCode, Account.ToStationTeleCode,Account.TicketType);
             if (response.status)
             {
@@ -517,7 +704,7 @@ namespace LFNet.TrainTicket.BLL
                 itemInfo.FromStationNo = trainItem.from_station_no;
                 itemInfo.ToStationNo = trainItem.to_station_no;
                 itemInfo.YpInfoDetail = trainItem.yp_info;
-                itemInfo.MmStr = item.secretStr;
+                itemInfo.MmStr = HtmlUtil.UrlDecode(item.secretStr);
                 itemInfo.LocationCode = trainItem.location_code;
                 list.Add(itemInfo);
             }
@@ -528,7 +715,7 @@ namespace LFNet.TrainTicket.BLL
         /// <summary>
         /// 打开查询页面
         /// </summary>
-        private async void OpenQueryPage()
+        private async Task<bool> OpenQueryPage()
         {
             if (_queryPageDynamicJsResult == null || (DateTime.Now - _queryPageTime).TotalMinutes > 20)
             {
@@ -536,7 +723,9 @@ namespace LFNet.TrainTicket.BLL
                 //查询准备 打开查询页 获取页面动态js结果
                 _queryPageDynamicJsResult = queryPageResult.DynamicJsResult;
                 _queryPageTime = DateTime.Now;
+                return true;
             }
+            return true;
         }
 
 
@@ -581,25 +770,51 @@ namespace LFNet.TrainTicket.BLL
         /// <returns></returns>
         private async Task<string> GetRandCode(int type = 0)
         {
-            string vcode = "";
             do
             {
                 Image image = await InterfaceProvider.GetRandCode(this, type);
-                var codeByForm = image.GetVCodeByForm();
-                Thread.Sleep(5000); //等待5s 输入时间
-                vcode = await codeByForm;
-                if (_stop) return vcode;
-                var checkRandCodeAnsynResponse = await this.CheckRandCodeAnsyn(vcode, type, "");
-
-                if (checkRandCodeAnsynResponse.data != null && checkRandCodeAnsynResponse.data.result == "1") break;
-                else
+                DateTime gTime = DateTime.Now;
+                var task = GetValidRandCode(image, type);
+                string vcode = await task;
+                if (!string.IsNullOrEmpty(vcode))
                 {
-                    if (checkRandCodeAnsynResponse.messages!=null&&checkRandCodeAnsynResponse.messages.Count>0)
-                        Info(checkRandCodeAnsynResponse.messages[0].ToString());
-                    Info("验证码不正确");
+                    DateTime bTime = DateTime.Now;
+                    TimeSpan timeSpan =
+                        new TimeSpan(0, 0, 0, ConfigFileManager.GetConfig<SystemConfig>().RandCodeWaitSeconds) -
+                        (bTime - gTime);
+                    
+                    
+                    if (timeSpan.TotalMilliseconds > 0)
+                    {
+                        Info("wait:" + timeSpan);
+                        Thread.Sleep(timeSpan);
+                    }
+                    return vcode;
                 }
-            } while (true);
-            return vcode;
+            } while (!_stop);
+            return "";
+        }
+
+        private async Task<string> GetValidRandCode(Image image,int type)
+        {
+            var codeByForm = image.GetVCodeByForm();
+            Thread.Sleep(ConfigFileManager.GetConfig<SystemConfig>().RandCodeCheckWaitSeconds * 1000); //等待5s 输入时间
+            string  vcode = await codeByForm;
+            if (_stop) return vcode;
+            if (string.IsNullOrEmpty(vcode)) return "";
+            var checkRandCodeAnsynResponse = await this.CheckRandCodeAnsyn(vcode, type, "");
+
+            if (checkRandCodeAnsynResponse.data != null && checkRandCodeAnsynResponse.data.result == "1")
+            {
+                return vcode;
+            }
+            else
+            {
+                if (checkRandCodeAnsynResponse.messages != null && checkRandCodeAnsynResponse.messages.Count > 0)
+                    Info(checkRandCodeAnsynResponse.messages[0].ToString());
+                Info("验证码不正确");
+                return "";
+            }
         }
 
         private async void Info(string message)
@@ -607,8 +822,27 @@ namespace LFNet.TrainTicket.BLL
             OnClientChanged(new ClientEventArgs<string>(message));
         }
 
+        /// <summary>  
+        /// 字符串转为UniCode码字符串  
+       /// </summary>  
+        /// <param name="s"></param>  
+        /// <returns></returns>  
+       public static string StringToUnicode(string s)  
+       {  
+           char[] charbuffers = s.ToCharArray();  
+           byte[] buffer;  
+           StringBuilder sb = new StringBuilder();  
+           for (int i = 0; i < charbuffers.Length; i++)  
+           {  
+                buffer = System.Text.Encoding.Unicode.GetBytes(charbuffers[i].ToString());  
+                sb.Append(String.Format("%u{0:X2}{1:X2}", buffer[1], buffer[0]));  
+            }  
+            return sb.ToString();  
+       }  
 
 
         #endregion
+
+        
     }
 }

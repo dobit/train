@@ -9,7 +9,7 @@
         public long requestId { get; set; }
         public int waitCount { get; set; }
         public string tourFlag { get; set; }
-        public object orderId { get; set; }
+        public string orderId { get; set; }
     }
 
 

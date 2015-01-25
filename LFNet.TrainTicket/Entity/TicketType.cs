@@ -1,13 +1,14 @@
-namespace LFNet.TrainTicket.Entity
+ï»¿namespace LFNet.TrainTicket.Entity
 {
     /// <summary>
-    /// Æ±ÀàĞÍ
+    /// ç¥¨ç±»å‹
     /// </summary>
     public enum TicketType
     {
-        ³ÉÈËÆ±=1,
-        ¶ùÍ¯Æ±=2,
-        Ñ§ÉúÆ±=3,
-        ²Ğ¾üÆ±=4
+
+        æˆäººç¥¨=1,
+        å„¿ç«¥ç¥¨=2,
+        å­¦ç”Ÿç¥¨=3,
+        æ®‹å†›ç¥¨=4
     }
 }

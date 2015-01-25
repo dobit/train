@@ -1,41 +1,41 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace LFNet.TrainTicket.Entity
 {
     /// <summary>
-    /// ³Ë³µÈËĞÅÏ¢
+    /// ä¹˜è½¦äººä¿¡æ¯
     /// </summary>
     [Serializable]
     public class Passenger
     {
-        private CardType _cardType=CardType.¶ş´úÉí·İÖ¤;
+        private CardType _cardType=CardType.äºŒä»£èº«ä»½è¯;
 
-        [DisplayName("Ö¤¼şÀàĞÍ")]
+        [DisplayName("è¯ä»¶ç±»å‹")]
         public CardType CardType
         {
             get { return _cardType; }
             set { _cardType = value; }
         }
 
-        [DisplayName("ĞÕÃû")]
+        [DisplayName("å§“å")]
         public string Name { get; set; }
-        [DisplayName("Ö¤¼şºÅÂë")]
+        [DisplayName("è¯ä»¶å·ç ")]
         public string CardNo { get; set; }
 
 
-        [DisplayName("ÊÖ»úºÅÂë")]
+        [DisplayName("æ‰‹æœºå·ç ")]
         public string MobileNo { get; set; }
 
         /// <summary>
-        /// ÊÇ·ñ¹´Ñ¡
+        /// æ˜¯å¦å‹¾é€‰
         /// </summary>
         public bool Checked { get; set; }
 
-        private SeatType _seatType=SeatType.Ó²ÎÔ;
+        private SeatType _seatType=SeatType.ç¡¬å§;
         /// <summary>
-        /// ×ùÎ»£¬Ä¬ÈÏÓ²ÎÔ
+        /// åº§ä½ï¼Œé»˜è®¤ç¡¬å§
         /// </summary>
         public SeatType SeatType
         {
@@ -43,10 +43,10 @@ namespace LFNet.TrainTicket.Entity
             set { _seatType = value; }
         }
 
-        private TicketType _ticketType=TicketType.³ÉÈËÆ±;
+        private TicketType _ticketType=TicketType.æˆäººç¥¨;
 
         /// <summary>
-        /// Ä¬ÈÏ³ÉÈËÆ±
+        /// é»˜è®¤æˆäººç¥¨
         /// </summary>
         public TicketType TicketType
         {
@@ -54,10 +54,10 @@ namespace LFNet.TrainTicket.Entity
             set { _ticketType = value; }
         }
 
-        private SeatDetailType _seatDetailType=SeatDetailType.Ëæ»ú;
+        private SeatDetailType _seatDetailType=SeatDetailType.éšæœº;
 
         /// <summary>
-        /// Ä¬ÈÏËæ»ú,Ö»Õë¶ÔÎÔÆÌÓĞĞ§£¿
+        /// é»˜è®¤éšæœº,åªé’ˆå¯¹å§é“ºæœ‰æ•ˆï¼Ÿ
         /// </summary>
         public SeatDetailType SeatDetailType
         {
@@ -67,7 +67,7 @@ namespace LFNet.TrainTicket.Entity
     }
 
     /// <summary>
-    ///  È«²¿³Ë¿ÍĞÅÏ¢
+    ///  å…¨éƒ¨ä¹˜å®¢ä¿¡æ¯
     /// </summary>
     public class PassengerCollection : List<Passenger>
     {

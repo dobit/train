@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using LFNet.Configuration;
@@ -107,24 +109,27 @@ namespace LFNet.TrainTicket.DAL
         /// 获取验证码
         /// </summary>
         /// <param name="client"></param>
-        /// <param name="type">0=登录，1=下单</param>
+        /// <param name="type">0=登录，1=下单,2=自动下单</param>
         /// <returns></returns>
         public static async Task<Image> GetRandCode(this Client client, int type = 0)
         {
             string url;
-            if (type == 0)
-            {
-                url = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=login&rand=sjrand&0." +
-                      new Random().Next(10000000, 99999999) +
-                      new Random().Next(10000000, 99999999);
-            }
-            else
+            string referurl;// = LoginPageUrl;
+             if(type==1)
             {
                 url = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp&0." +
                       new Random().Next(10000000, 99999999) +
                       new Random().Next(10000000, 99999999);
+                referurl = OrderPageUrl;
+            }else 
+            {
+                url = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=login&rand=sjrand&0." +
+                      new Random().Next(10000000, 99999999) +
+                      new Random().Next(10000000, 99999999);
+                referurl = LoginPageUrl;
             }
-            Stream stream = await GetHttpClient(client, LoginPageUrl).GetStreamAsync(url);
+             if (type == 2) referurl = QueryPageUrl;
+            Stream stream = await GetHttpClient(client, referurl).GetStreamAsync(url);
             return Image.FromStream(stream);
         }
 
@@ -150,7 +155,7 @@ namespace LFNet.TrainTicket.DAL
                 }.ToUrlEncodedContent(), LoginPageUrl);
 
             }
-            else
+            else if(randType==1)
             {
                 return await AjaxPostToJsonObjectAsync<Response<CheckRandCodeAnsynResponse>>(client, CheckRandCodeAnsynUrl, new
                 {
@@ -159,6 +164,15 @@ namespace LFNet.TrainTicket.DAL
                     _json_att = "",
                     REPEAT_SUBMIT_TOKEN = token
                 }.ToUrlEncodedContent(), OrderPageUrl);
+            }
+            else
+            {
+                return await AjaxPostToJsonObjectAsync<Response<CheckRandCodeAnsynResponse>>(client, CheckRandCodeAnsynUrl, new
+                {
+                    randCode,
+                    rand = "sjrand",
+                    randCode_validate = ""
+                }.ToUrlEncodedContent(), QueryPageUrl);
             }
 
 
@@ -326,6 +340,53 @@ namespace LFNet.TrainTicket.DAL
             return await AjaxGetToJsonObjectAsync<Response<QueryResponse>>(client, url, QueryPageUrl);
 
         }
+        /// <summary>
+        /// 自动提交
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<Response<AutoSubmitOrderRequestResponse>> AutoSubmitOrderRequest(this Client client, string secretStr, SeatType seatType, DynamicJsResult queryPageDynamicJsResult, AccountInfo account)
+        {
+            //https://kyfw.12306.cn/otn/confirmPassenger/autoSubmitOrderRequest
+            string passengerTicketStr = "";
+            string oldPassengerStr = "";
+            foreach (Passenger passenger in client.Passengers.Where(p=>p.Checked))
+            {
+               
+                passengerTicketStr += string.Format("{0},{1},{2},{3},{4},{5},{6},N_",
+                    seatType.ToSeatTypeValue(),
+                    (int)passenger.SeatDetailType,
+                    (int)passenger.TicketType, passenger.Name,
+                    passenger.CardType.ToCardTypeValue(),
+                    passenger.CardNo, passenger.MobileNo);
+                oldPassengerStr += string.Format("{0},{1},{2},{3}_", passenger.Name,
+                    passenger.CardType.ToCardTypeValue(),
+                    passenger.CardNo,(int)passenger.TicketType);
+            }
+            passengerTicketStr = passengerTicketStr.TrimEnd('_');
+
+            Dictionary<string, string> newforms = new Dictionary<string, string>()
+            {
+                {queryPageDynamicJsResult.Key,queryPageDynamicJsResult.Value	},   
+                {"myversion","undefined"	},  
+                {"secretStr",secretStr	},
+                {"train_date",	account.TrainDate.ToString("yyyy-MM-dd")},
+                //{"back_train_date",account.BackTrainDate.ToString("yyyy-MM-dd")},
+                {"tour_flag","dc"},
+                {"purpose_codes","ADULT"},
+                {"query_from_station_name",account.FromStation},
+                {"query_to_station_name",account.ToStation},
+                {"cancel_flag","2"},
+                {"bed_level_order_num","000000000000000000000000000000"},
+                {"passengerTicketStr",passengerTicketStr},
+                {"oldPassengerStr",oldPassengerStr},
+            };
+            FormUrlEncodedContent formUrlEncodedContent=new FormUrlEncodedContent(newforms);
+            ;
+            HttpContent content = new StringContent(formUrlEncodedContent.ReadAsStringAsync().Result.Replace("cancel_flag", "&cancel_flag"), Encoding.UTF8, "application/x-www-form-urlencoded");
+
+            return await AjaxPostToJsonObjectAsync<Response<AutoSubmitOrderRequestResponse>>(client, "https://kyfw.12306.cn/otn/confirmPassenger/autoSubmitOrderRequest", content, QueryPageUrl);
+
+        }
 
         /// <summary>
         /// https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=submutOrderRequest
@@ -457,9 +518,9 @@ namespace LFNet.TrainTicket.DAL
                         (int)passenger.TicketType, passenger.Name,
                         passenger.CardType.ToCardTypeValue(),
                         passenger.CardNo, passenger.MobileNo);
-                    oldPassengerStr += string.Format("{0},{1},{2}_", passenger.Name,
+                    oldPassengerStr += string.Format("{0},{1},{2},{3}_", passenger.Name,
                         passenger.CardType.ToCardTypeValue(),
-                        passenger.CardNo);
+                        passenger.CardNo, (int)passenger.TicketType);
                 //}
 
             }
@@ -517,6 +578,35 @@ namespace LFNet.TrainTicket.DAL
                 OrderPageUrl);
         }
 
+        /// <summary>
+        /// 自动提交查询走这里
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="trainDate"></param>
+        /// <param name="trainItemInfo"></param>
+        /// <param name="leftTicket"></param>
+        /// <param name="seatType"></param>
+        /// <returns></returns>
+        public static async Task<Response<GetQueueCountResponse>> GetQueueCountAsync(this Client client, DateTime trainDate, TrainItemInfo trainItemInfo, string leftTicket, SeatType seatType)
+        {
+
+            Dictionary<string, string> form = new Dictionary<string, string>()
+            {
+                {"train_date", trainDate.ToString("ddd MMM dd yyyy HH:mm:ss",System.Globalization.CultureInfo.InvariantCulture)+" GMT+0800 (中国标准时间)"},
+                {"train_no",trainItemInfo.TrainNo4},
+                {"stationTrainCode",trainItemInfo.TrainNo},
+                {"seatType",seatType.ToSeatTypeValue()},
+                {"fromStationTelecode",trainItemInfo.FromStationTelecode},
+                {"toStationTelecode",trainItemInfo.ToStationTelecode},
+                {"leftTicket",leftTicket},
+                {"purpose_codes","ADULT"},
+                {"_json_att",""},
+            };
+            return await AjaxPostToJsonObjectAsync<Response<GetQueueCountResponse>>(client,
+                "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCountAsync", new FormUrlEncodedContent(form),
+                QueryPageUrl);
+        }
+
         public static async Task<Response<ConfirmSingleForQueueResponse>> ConfirmSingleForQueue(this Client client, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, InitDcResult initDcResult, string trainLocation)
         {
             string passengerTicketStr = "";
@@ -532,9 +622,9 @@ namespace LFNet.TrainTicket.DAL
                         (int)passenger.TicketType, passenger.Name,
                         passenger.CardType.ToCardTypeValue(),
                         passenger.CardNo, passenger.MobileNo);
-                    oldPassengerStr += string.Format("{0},{1},{2}_", passenger.Name,
+                    oldPassengerStr += string.Format("{0},{1},{2},{3}_", passenger.Name,
                         passenger.CardType.ToCardTypeValue(),
-                        passenger.CardNo);
+                        passenger.CardNo, (int)passenger.TicketType);
                 }
 
             }
@@ -558,6 +648,47 @@ namespace LFNet.TrainTicket.DAL
                 OrderPageUrl);
         }
 
+
+        public static async Task<Response<ConfirmSingleForQueueResponse>> ConfirmSingleForQueueAsys(this Client client, IEnumerable<Passenger> passengers, SeatType seatType, string randCode, InitDcResult initDcResult, string trainLocation)
+        {
+            string passengerTicketStr = "";
+            string oldPassengerStr = "";
+            foreach (Passenger passenger in passengers)
+            {
+
+                if (passenger.Checked)
+                {
+                    passengerTicketStr += string.Format("{0},{1},{2},{3},{4},{5},{6},N_",
+                        seatType.ToSeatTypeValue(),
+                        (int)passenger.SeatDetailType,
+                        (int)passenger.TicketType, passenger.Name,
+                        passenger.CardType.ToCardTypeValue(),
+                        passenger.CardNo, passenger.MobileNo);
+                    oldPassengerStr += string.Format("{0},{1},{2},{3}_", passenger.Name,
+                        passenger.CardType.ToCardTypeValue(),
+                        passenger.CardNo, (int)passenger.TicketType);
+                }
+
+            }
+            passengerTicketStr = passengerTicketStr.TrimEnd('_');
+            Dictionary<string, string> form = new Dictionary<string, string>()
+            {
+              
+                {"passengerTicketStr",passengerTicketStr},
+                {"oldPassengerStr",oldPassengerStr},
+                {"randCode",randCode},
+                {"purpose_codes","ADULT"},
+                {"key_check_isChange",initDcResult.KeyCheckIsChange},
+                {"leftTicketStr",initDcResult.LeftTicketStr},
+                {"train_location",trainLocation},
+                {"_json_att",""},
+            };
+            return await AjaxPostToJsonObjectAsync<Response<ConfirmSingleForQueueResponse>>(client,
+                "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueueAsys", new FormUrlEncodedContent(form),
+                QueryPageUrl);
+        }
+
+
         /// <summary>
         /// https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?random=1419994586921&tourFlag=dc&_json_att=&REPEAT_SUBMIT_TOKEN=c92104171aee0b7323c8e2466a9d3f8c
         /// </summary>
@@ -565,16 +696,31 @@ namespace LFNet.TrainTicket.DAL
         /// <returns></returns>
         public static async Task<Response<QueryOrderWaitTimeResponse>> QueryOrderWaitTime(this Client client, string submitToken)
         {
-            
-            return await AjaxGetToJsonObjectAsync<Response<QueryOrderWaitTimeResponse>>(client,
-                "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?"+new UrlEncodedContent(new
+            object obj = null;
+            if (string.IsNullOrEmpty(submitToken))
+            {
+                obj = new
                 {
-                    random=new Random().Next(10000000, 99999999) +
-                           new Random().Next(10000000, 99999999),
-                    tourFlag="dc",
-                    _json_att="",
+                    random = new Random().Next(10000000, 99999999) +
+                             new Random().Next(10000000, 99999999),
+                    tourFlag = "dc",
+                    _json_att = "",
+                };
+            }
+            else
+            {
+                obj = new
+                {
+                    random = new Random().Next(10000000, 99999999) +
+                             new Random().Next(10000000, 99999999),
+                    tourFlag = "dc",
+                    _json_att = "",
                     REPEAT_SUBMIT_TOKEN = submitToken,
-                }),
+                };
+            }
+
+            return await AjaxGetToJsonObjectAsync<Response<QueryOrderWaitTimeResponse>>(client,
+                "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?"+new UrlEncodedContent(obj),
                 OrderPageUrl);
         }
 
@@ -711,13 +857,17 @@ namespace LFNet.TrainTicket.DAL
             return await GetHttpClient(client, refererUrl).PostAsync(url, content);
         }
 
-        public const string UserAgent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
+        public const string UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko";// "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
         private static LFNet.Net.Http.JHttpClient GetHttpClient(this Client client, string referrer, bool isAjax = false)
         {
             Net.Http.JHttpClient httpClient = HttpClientFactory.Create(referrer, UserAgent, client.Cookie, true);
-            httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+            if (isAjax)
+            {
+                httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+                httpClient.DefaultRequestHeaders.Add("Origin", " https://kyfw.12306.cn");
+            }
             httpClient.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.8");
-            httpClient.DefaultRequestHeaders.Add("Origin", " https://kyfw.12306.cn");
+            httpClient.DefaultRequestHeaders.Add("DNT", "1");
             httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
             return httpClient;
         }

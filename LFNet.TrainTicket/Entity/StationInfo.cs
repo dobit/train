@@ -1,4 +1,4 @@
-namespace LFNet.TrainTicket.Entity
+﻿namespace LFNet.TrainTicket.Entity
 {
     public class StationInfo
     {

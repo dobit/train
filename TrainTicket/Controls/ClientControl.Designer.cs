@@ -30,8 +30,9 @@ namespace LFNet.TrainTicket
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            LFNet.TrainTicket.Entity.StationInfo stationInfo1 = new LFNet.TrainTicket.Entity.StationInfo();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ClientControl));
+            LFNet.TrainTicket.Entity.StationInfo stationInfo3 = new LFNet.TrainTicket.Entity.StationInfo();
+            LFNet.TrainTicket.Entity.StationInfo stationInfo4 = new LFNet.TrainTicket.Entity.StationInfo();
             this.adPanel = new System.Windows.Forms.Panel();
             this.webBrowser1 = new System.Windows.Forms.WebBrowser();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
@@ -39,22 +40,16 @@ namespace LFNet.TrainTicket
             this.accountInfoBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.tbPassword = new System.Windows.Forms.TextBox();
             this.btnOpenExplorer = new System.Windows.Forms.Button();
-            this.passengersCheckedBoxList = new System.Windows.Forms.CheckedListBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.lbPassengers = new System.Windows.Forms.RichTextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.ToStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
-            this.FromStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
             this.label5 = new System.Windows.Forms.Label();
             this.btnStop = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.lbSeattypes = new System.Windows.Forms.Label();
-            this.seatTypesCtrl1 = new LFNet.TrainTicket.Controls.SeatTypesCtrl();
             this.btnQuery = new System.Windows.Forms.Button();
-            this.tbTrainPass = new LFNet.TrainTicket.Controls.TrainPassCtrl();
-            this.tbTrainclass = new LFNet.TrainTicket.Controls.TrainclassCtrl();
             this.tbTrainNo = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
@@ -69,6 +64,12 @@ namespace LFNet.TrainTicket
             this.label9 = new System.Windows.Forms.Label();
             this.关于AToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.axWindowsMediaPlayer1 = new AxWMPLib.AxWindowsMediaPlayer();
+            this.ToStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
+            this.FromStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
+            this.seatTypesCtrl1 = new LFNet.TrainTicket.Controls.SeatTypesCtrl();
+            this.tbTrainPass = new LFNet.TrainTicket.Controls.TrainPassCtrl();
+            this.tbTrainclass = new LFNet.TrainTicket.Controls.TrainclassCtrl();
+            this.psControl = new LFNet.TrainTicket.Controls.PassengersControl();
             this.adPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -128,7 +129,7 @@ namespace LFNet.TrainTicket
             // 
             // btnOpenExplorer
             // 
-            this.btnOpenExplorer.Location = new System.Drawing.Point(622, 204);
+            this.btnOpenExplorer.Location = new System.Drawing.Point(623, 179);
             this.btnOpenExplorer.Name = "btnOpenExplorer";
             this.btnOpenExplorer.Size = new System.Drawing.Size(93, 23);
             this.btnOpenExplorer.TabIndex = 38;
@@ -136,20 +137,6 @@ namespace LFNet.TrainTicket
             this.toolTip1.SetToolTip(this.btnOpenExplorer, "单击将打开浏览器，如果已经登录则不需要再登录");
             this.btnOpenExplorer.UseVisualStyleBackColor = true;
             this.btnOpenExplorer.Click += new System.EventHandler(this.btnOpenExplorer_Click);
-            // 
-            // passengersCheckedBoxList
-            // 
-            this.passengersCheckedBoxList.BackColor = System.Drawing.SystemColors.Control;
-            this.passengersCheckedBoxList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.passengersCheckedBoxList.CheckOnClick = true;
-            this.passengersCheckedBoxList.DataBindings.Add(new System.Windows.Forms.Binding("SelectedValue", this.accountInfoBindingSource, "Passengers", true));
-            this.passengersCheckedBoxList.FormattingEnabled = true;
-            this.passengersCheckedBoxList.Location = new System.Drawing.Point(68, 93);
-            this.passengersCheckedBoxList.MultiColumn = true;
-            this.passengersCheckedBoxList.Name = "passengersCheckedBoxList";
-            this.passengersCheckedBoxList.Size = new System.Drawing.Size(682, 48);
-            this.passengersCheckedBoxList.TabIndex = 49;
-            this.toolTip1.SetToolTip(this.passengersCheckedBoxList, "选择乘客");
             // 
             // splitContainer1
             // 
@@ -185,9 +172,9 @@ namespace LFNet.TrainTicket
             // 
             this.groupBox4.Controls.Add(this.lbPassengers);
             this.groupBox4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBox4.Location = new System.Drawing.Point(0, 285);
+            this.groupBox4.Location = new System.Drawing.Point(0, 261);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(784, 325);
+            this.groupBox4.Size = new System.Drawing.Size(784, 349);
             this.groupBox4.TabIndex = 10;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "日志";
@@ -197,13 +184,13 @@ namespace LFNet.TrainTicket
             this.lbPassengers.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lbPassengers.Location = new System.Drawing.Point(3, 17);
             this.lbPassengers.Name = "lbPassengers";
-            this.lbPassengers.Size = new System.Drawing.Size(778, 305);
+            this.lbPassengers.Size = new System.Drawing.Size(778, 329);
             this.lbPassengers.TabIndex = 0;
             this.lbPassengers.Text = "";
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.passengersCheckedBoxList);
+            this.groupBox1.Controls.Add(this.psControl);
             this.groupBox1.Controls.Add(this.ToStationCtrl);
             this.groupBox1.Controls.Add(this.FromStationCtrl);
             this.groupBox1.Controls.Add(this.btnOpenExplorer);
@@ -226,34 +213,10 @@ namespace LFNet.TrainTicket
             this.groupBox1.Dock = System.Windows.Forms.DockStyle.Top;
             this.groupBox1.Location = new System.Drawing.Point(0, 49);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(784, 236);
+            this.groupBox1.Size = new System.Drawing.Size(784, 212);
             this.groupBox1.TabIndex = 11;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "购票设置";
-            // 
-            // ToStationCtrl
-            // 
-            this.ToStationCtrl.AutoSize = true;
-            this.ToStationCtrl.DataBindings.Add(new System.Windows.Forms.Binding("SelectedValue", this.accountInfoBindingSource, "ToStationInfo", true));
-            this.ToStationCtrl.Location = new System.Drawing.Point(264, 23);
-            this.ToStationCtrl.Name = "ToStationCtrl";
-            stationInfo1.Code = "VAP";
-            stationInfo1.Id = "beijingbei";
-            stationInfo1.Name = "北京北";
-            stationInfo1.PY = "bjb";
-            this.ToStationCtrl.SelectedValue = stationInfo1;
-            this.ToStationCtrl.Size = new System.Drawing.Size(124, 23);
-            this.ToStationCtrl.TabIndex = 48;
-            // 
-            // FromStationCtrl
-            // 
-            this.FromStationCtrl.AutoSize = true;
-            this.FromStationCtrl.DataBindings.Add(new System.Windows.Forms.Binding("SelectedValue", this.accountInfoBindingSource, "FromStationInfo", true));
-            this.FromStationCtrl.Location = new System.Drawing.Point(68, 23);
-            this.FromStationCtrl.Name = "FromStationCtrl";
-            this.FromStationCtrl.SelectedValue = stationInfo1;
-            this.FromStationCtrl.Size = new System.Drawing.Size(124, 23);
-            this.FromStationCtrl.TabIndex = 47;
             // 
             // label5
             // 
@@ -267,7 +230,7 @@ namespace LFNet.TrainTicket
             // 
             // btnStop
             // 
-            this.btnStop.Location = new System.Drawing.Point(532, 204);
+            this.btnStop.Location = new System.Drawing.Point(533, 179);
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(75, 23);
             this.btnStop.TabIndex = 35;
@@ -278,7 +241,7 @@ namespace LFNet.TrainTicket
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(-1, 204);
+            this.label1.Location = new System.Drawing.Point(0, 179);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(59, 12);
             this.label1.TabIndex = 34;
@@ -287,53 +250,21 @@ namespace LFNet.TrainTicket
             // lbSeattypes
             // 
             this.lbSeattypes.AutoSize = true;
-            this.lbSeattypes.Location = new System.Drawing.Point(64, 204);
+            this.lbSeattypes.Location = new System.Drawing.Point(65, 179);
             this.lbSeattypes.Name = "lbSeattypes";
             this.lbSeattypes.Size = new System.Drawing.Size(29, 12);
             this.lbSeattypes.TabIndex = 33;
             this.lbSeattypes.Text = "硬卧";
             // 
-            // seatTypesCtrl1
-            // 
-            this.seatTypesCtrl1.AutoSize = true;
-            this.seatTypesCtrl1.BackColor = System.Drawing.Color.BlanchedAlmond;
-            this.seatTypesCtrl1.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "SeatOrder", true));
-            this.seatTypesCtrl1.Location = new System.Drawing.Point(66, 161);
-            this.seatTypesCtrl1.Margin = new System.Windows.Forms.Padding(4);
-            this.seatTypesCtrl1.Name = "seatTypesCtrl1";
-            this.seatTypesCtrl1.Size = new System.Drawing.Size(600, 31);
-            this.seatTypesCtrl1.TabIndex = 24;
-            this.seatTypesCtrl1.Value = "其他,无座,硬座,软座,硬卧,软卧,高级软卧,二等座,一等座,特等座,商务座";
-            this.seatTypesCtrl1.ValueChanged += new System.EventHandler(this.seatTypesCtrl1_ValueChanged);
-            // 
             // btnQuery
             // 
-            this.btnQuery.Location = new System.Drawing.Point(426, 204);
+            this.btnQuery.Location = new System.Drawing.Point(427, 179);
             this.btnQuery.Name = "btnQuery";
             this.btnQuery.Size = new System.Drawing.Size(88, 23);
             this.btnQuery.TabIndex = 7;
             this.btnQuery.Text = "开始执行(&R)";
             this.btnQuery.UseVisualStyleBackColor = true;
             this.btnQuery.Click += new System.EventHandler(this.btnQuery_Click);
-            // 
-            // tbTrainPass
-            // 
-            this.tbTrainPass.Location = new System.Drawing.Point(626, 48);
-            this.tbTrainPass.Margin = new System.Windows.Forms.Padding(4);
-            this.tbTrainPass.Name = "tbTrainPass";
-            this.tbTrainPass.Size = new System.Drawing.Size(142, 26);
-            this.tbTrainPass.TabIndex = 25;
-            this.tbTrainPass.Value = "QB";
-            // 
-            // tbTrainclass
-            // 
-            this.tbTrainclass.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "TrainClass", true));
-            this.tbTrainclass.Location = new System.Drawing.Point(226, 48);
-            this.tbTrainclass.Margin = new System.Windows.Forms.Padding(4);
-            this.tbTrainclass.Name = "tbTrainclass";
-            this.tbTrainclass.Size = new System.Drawing.Size(402, 28);
-            this.tbTrainclass.TabIndex = 23;
-            this.tbTrainclass.Value = "";
             // 
             // tbTrainNo
             // 
@@ -472,6 +403,74 @@ namespace LFNet.TrainTicket
             this.axWindowsMediaPlayer1.TabIndex = 31;
             this.axWindowsMediaPlayer1.Visible = false;
             // 
+            // ToStationCtrl
+            // 
+            this.ToStationCtrl.AutoSize = true;
+            this.ToStationCtrl.DataBindings.Add(new System.Windows.Forms.Binding("SelectedValue", this.accountInfoBindingSource, "ToStationInfo", true));
+            this.ToStationCtrl.Location = new System.Drawing.Point(264, 23);
+            this.ToStationCtrl.Name = "ToStationCtrl";
+            stationInfo3.Code = null;
+            stationInfo3.Id = null;
+            stationInfo3.Name = null;
+            stationInfo3.PY = null;
+            this.ToStationCtrl.SelectedValue = stationInfo3;
+            this.ToStationCtrl.Size = new System.Drawing.Size(124, 23);
+            this.ToStationCtrl.TabIndex = 48;
+            // 
+            // FromStationCtrl
+            // 
+            this.FromStationCtrl.AutoSize = true;
+            this.FromStationCtrl.DataBindings.Add(new System.Windows.Forms.Binding("SelectedValue", this.accountInfoBindingSource, "FromStationInfo", true));
+            this.FromStationCtrl.Location = new System.Drawing.Point(68, 23);
+            this.FromStationCtrl.Name = "FromStationCtrl";
+            stationInfo4.Code = null;
+            stationInfo4.Id = null;
+            stationInfo4.Name = null;
+            stationInfo4.PY = null;
+            this.FromStationCtrl.SelectedValue = stationInfo4;
+            this.FromStationCtrl.Size = new System.Drawing.Size(124, 23);
+            this.FromStationCtrl.TabIndex = 47;
+            // 
+            // seatTypesCtrl1
+            // 
+            this.seatTypesCtrl1.AutoSize = true;
+            this.seatTypesCtrl1.BackColor = System.Drawing.Color.BlanchedAlmond;
+            this.seatTypesCtrl1.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "SeatOrder", true));
+            this.seatTypesCtrl1.Location = new System.Drawing.Point(67, 136);
+            this.seatTypesCtrl1.Margin = new System.Windows.Forms.Padding(4);
+            this.seatTypesCtrl1.Name = "seatTypesCtrl1";
+            this.seatTypesCtrl1.Size = new System.Drawing.Size(600, 31);
+            this.seatTypesCtrl1.TabIndex = 24;
+            this.seatTypesCtrl1.Value = "其他,无座,硬座,软座,硬卧,软卧,高级软卧,二等座,一等座,特等座,商务座";
+            this.seatTypesCtrl1.ValueChanged += new System.EventHandler(this.seatTypesCtrl1_ValueChanged);
+            // 
+            // tbTrainPass
+            // 
+            this.tbTrainPass.Location = new System.Drawing.Point(626, 48);
+            this.tbTrainPass.Margin = new System.Windows.Forms.Padding(4);
+            this.tbTrainPass.Name = "tbTrainPass";
+            this.tbTrainPass.Size = new System.Drawing.Size(142, 26);
+            this.tbTrainPass.TabIndex = 25;
+            this.tbTrainPass.Value = "QB";
+            // 
+            // tbTrainclass
+            // 
+            this.tbTrainclass.DataBindings.Add(new System.Windows.Forms.Binding("Value", this.accountInfoBindingSource, "TrainClass", true));
+            this.tbTrainclass.Location = new System.Drawing.Point(226, 48);
+            this.tbTrainclass.Margin = new System.Windows.Forms.Padding(4);
+            this.tbTrainclass.Name = "tbTrainclass";
+            this.tbTrainclass.Size = new System.Drawing.Size(402, 28);
+            this.tbTrainclass.TabIndex = 23;
+            this.tbTrainclass.Value = "";
+            // 
+            // psControl
+            // 
+            this.psControl.Location = new System.Drawing.Point(68, 85);
+            this.psControl.Name = "psControl";
+            this.psControl.Passengers = null;
+            this.psControl.Size = new System.Drawing.Size(700, 35);
+            this.psControl.TabIndex = 49;
+            // 
             // ClientControl
             // 
             this.Controls.Add(this.axWindowsMediaPlayer1);
@@ -537,7 +536,7 @@ namespace LFNet.TrainTicket
         private System.Windows.Forms.BindingSource accountInfoBindingSource;
         private StationCtrl ToStationCtrl;
         private StationCtrl FromStationCtrl;
-        private System.Windows.Forms.CheckedListBox passengersCheckedBoxList;
+        private PassengersControl psControl;
     }
 }
 
