@@ -105,6 +105,15 @@ namespace LFNet.TrainTicket.BLL
         /// </summary>
         private DynamicJsResult _queryPageDynamicJsResult = null;
 
+        /// <summary>
+        /// 登陆页时间
+        /// </summary>
+        private DateTime _loginPageTime = DateTime.MinValue;
+        /// <summary>
+        /// 登陆页返回结果
+        /// </summary>
+        private DynamicJsResult _loginPageDynamicJsResult = null;
+
         private LoginState _loginState;
         private ExcuteState _excuteState;
 
@@ -185,6 +194,8 @@ namespace LFNet.TrainTicket.BLL
             Cookie = new CookieContainer();
             TrainInfos=new List<TrainItemInfo>();
             Passengers=new List<Passenger>();
+            this.OpenQueryPage();
+            this.OpenLoginPage();
         }
 
         #endregion
@@ -742,17 +753,50 @@ namespace LFNet.TrainTicket.BLL
         /// </summary>
         private async Task<bool> OpenQueryPage()
         {
-            if (_queryPageDynamicJsResult == null || (DateTime.Now - _queryPageTime).TotalMinutes > 20)
+            try
             {
-                var queryPageResult = await this.GetQueryPageResult();
-                //查询准备 打开查询页 获取页面动态js结果
-                _queryPageDynamicJsResult = queryPageResult.DynamicJsResult;
-                _queryPageTime = DateTime.Now;
+                if (_queryPageDynamicJsResult == null || (DateTime.Now - _queryPageTime).TotalMinutes > 20)
+                {
+                    var queryPageResult = await this.GetQueryPageResult();
+                    //查询准备 打开查询页 获取页面动态js结果
+                    _queryPageDynamicJsResult = queryPageResult.DynamicJsResult;
+                    _queryPageTime = DateTime.Now;
+                    return true;
+                }
                 return true;
             }
-            return true;
+            catch (Exception ex)
+            {
+                Info(ex.Message);
+                LogUtil.Log(ex);
+                return false;
+            }
         }
 
+        /// <summary>
+        /// 打开查询页面
+        /// </summary>
+        private async Task<bool> OpenLoginPage()
+        {
+            try
+            {
+                if (_loginPageDynamicJsResult == null || (DateTime.Now - _loginPageTime).TotalMinutes > 20)
+                {
+                    var queryPageResult = await this.GetLoginPageResult();
+                    //查询准备 打开查询页 获取页面动态js结果
+                    _loginPageDynamicJsResult = queryPageResult.DynamicJsResult;
+                    _loginPageTime = DateTime.Now;
+                    return true;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Info(ex.Message);
+                LogUtil.Log(ex);
+                return false;
+            }
+        }
 
         #endregion
 
@@ -793,12 +837,16 @@ namespace LFNet.TrainTicket.BLL
         /// 获取一个有效的验证码
         /// </summary>
         /// <returns></returns>
-        private async Task<string> GetRandCode(int type = 0)
+        private async Task<string> GetRandCode(int type = 0,Image image=null)
         {
             do
             {
-                Image image = await InterfaceProvider.GetRandCode(this, type);
-                DateTime gTime = DateTime.Now;
+                DateTime gTime = DateTime.MinValue;
+                if (image != null)
+                {
+                    image = await InterfaceProvider.GetRandCode(this, type);
+                    gTime = DateTime.Now;
+                }
                 var task = GetValidRandCode(image, type);
                 string vcode = await task;
                 if (!string.IsNullOrEmpty(vcode))
@@ -816,6 +864,7 @@ namespace LFNet.TrainTicket.BLL
                     }
                     return vcode;
                 }
+                image = null;
             } while (!_stop);
             return "";
         }
