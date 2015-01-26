@@ -421,15 +421,28 @@ namespace LFNet.TrainTicket.BLL
             {
                 Response<QueryOrderWaitTimeResponse> waitTimeResponse =
                     await this.QueryOrderWaitTime(initDcResult.RepeatSubmitToken);
-                if (waitTimeResponse.status && string.IsNullOrEmpty(waitTimeResponse.data.orderId))
+                if (waitTimeResponse.data != null)
                 {
-                    Info("购票成功：订单号" + waitTimeResponse.data.orderId);
-                    //出发事件
+                    if (string.IsNullOrEmpty(waitTimeResponse.data.orderId))
+                    {
+                        Info("购票成功：订单号" + waitTimeResponse.data.orderId);
+                        //出发事件
 
-                    this.Stop();
-                    return true;
+                        this.Stop();
+                        return true;
+                    }
+                    else
+                    {
+                        Info(string.Format("排队{2}人，等待{0}次，等待{1}秒", waitTimeResponse.data.waitCount,
+                            waitTimeResponse.data.waitTime, waitTimeResponse.data.count));
+                        Thread.Sleep(waitTimeResponse.data.waitTime*1000);
+                    }
                 }
-                Thread.Sleep(waitTimeResponse.data.waitTime*1000);
+                else
+                {
+                    Info("系统异常:" + waitTimeResponse.messages.ToJson()); 
+                }
+                
             } while (!_stop);
             return false;
         }
@@ -500,17 +513,6 @@ namespace LFNet.TrainTicket.BLL
 
                     //todo:当余票不足是否下单？
                     return false;
-                    //if (!cbForce.Checked) //强制下单
-                    //{
-                    //    if (cbShowRealYp.Checked) //持续检查余票
-                    //    {
-                    //        Log(account, optimizeTrain.TrainNo + " ,持续检查余票开启");
-                    //        Thread.Sleep(1000);
-                    //        goto CheckOrderInfo;
-                    //    }
-                    //    continue;
-                    //}
-                    //Log(account, optimizeTrain.TrainNo + " ,强制下单开启！");
                 }
             }
             //下单
@@ -564,30 +566,40 @@ namespace LFNet.TrainTicket.BLL
         /// <returns>登录时否成功</returns>
         public async Task<bool> Login()
         {
-            //todo:检查用户状态
-            if (LoginState == LoginState.Login) return true;
-            //打开登陆页面
-            var loginPageResult = await this.GetLoginPageResult();
-
-            var randCode = await GetRandCode();
-
-            //Thread.Sleep(5000); //单击等待
-            Response<LoginAysnSuggestResponse> response =
-                await
-                    this.LoginAsynSuggest(this.Account.Username, this.Account.Password, randCode, loginPageResult.DynamicJsResult.Key, loginPageResult.DynamicJsResult.Value);
-            if (response.data != null && response.data.loginCheck == "Y")
+            try
             {
-                Info("登录成功");
-                LoginState = LoginState.Login;
-                //刷新乘客信息
-                Task<bool> refreshPassengers = RefreshPassengers();
-                await refreshPassengers;
-                return true;
+                //todo:检查用户状态
+                if (LoginState == LoginState.Login) return true;
+                //打开登陆页面
+                var loginPageResult = await this.GetLoginPageResult();
+
+                var randCode = await GetRandCode();
+
+                //Thread.Sleep(5000); //单击等待
+                Response<LoginAysnSuggestResponse> response =
+                    await
+                        this.LoginAsynSuggest(this.Account.Username, this.Account.Password, randCode,
+                            loginPageResult.DynamicJsResult.Key, loginPageResult.DynamicJsResult.Value);
+                if (response.data != null && response.data.loginCheck == "Y")
+                {
+                    Info("登录成功");
+                    LoginState = LoginState.Login;
+                    //刷新乘客信息
+                    Task<bool> refreshPassengers = RefreshPassengers();
+                    await refreshPassengers;
+                    return true;
+                }
+                else
+                {
+                    Info(response.messages[0].ToString());
+                    LoginState = LoginState.UnLogin;
+                    return false;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Info(response.messages[0].ToString());
-                LoginState = LoginState.UnLogin;
+                this.Info(ex.Message);
+                LogUtil.Log(ex);
                 return false;
             }
         }
@@ -649,16 +661,29 @@ namespace LFNet.TrainTicket.BLL
 
         public async Task<bool> QueryLeftTicket()
         {
-            await  OpenQueryPage();
-            this.QueryTLog(Account.TrainDate, Account.FromStationTeleCode, Account.ToStationTeleCode, Account.TicketType);
-            Response<QueryResponse> response = await this.QueryTrainInfos(Account.TrainDate, Account.FromStationTeleCode, Account.ToStationTeleCode,Account.TicketType);
-            if (response.status)
+            try
             {
-               this.TrainInfos=  ToTrainItemInfos(response.data, this.TrainInfos);
-                //todo:事件
-                return true;
+                await OpenQueryPage();
+                this.QueryTLog(Account.TrainDate, Account.FromStationTeleCode, Account.ToStationTeleCode,
+                    Account.TicketType);
+                Response<QueryResponse> response =
+                    await
+                        this.QueryTrainInfos(Account.TrainDate, Account.FromStationTeleCode, Account.ToStationTeleCode,
+                            Account.TicketType);
+                if (response.status)
+                {
+                    this.TrainInfos = ToTrainItemInfos(response.data, this.TrainInfos);
+                    //todo:事件
+                    return true;
+                }
+                return false;
             }
-            return false;
+            catch (Exception ex)
+            {
+                Info(ex.Message);
+                LogUtil.Log(ex);
+                return false;
+            }
         }
 
         /// <summary>

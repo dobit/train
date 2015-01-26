@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Media;
 using System.Net;
 using System.Resources;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -357,18 +359,11 @@ namespace LFNet.TrainTicket
                     
                     this.client.Account = accountInfo;
                     this.accountInfoBindingSource.DataSource = this.client.Account;
-                    //foreach (Passenger passenger in Global.GetPassengers())
-                    //{
-                    //    if (passenger.Checked)
-                    //    {
-                    //        if (this.client.Passengers.Find(p => p.Name == passenger.Name) == null)
-                    //            this.client.Passengers.Add(passenger);
-                    //        if(!this.passengersCheckedBoxList.Items.Contains(passenger.Name))
-                    //        this.passengersCheckedBoxList.Items.Add(passenger.Name, true);
-                    //    }
-                    //}
+                    
                 }
             }
         }
+
+        
     }
 }
