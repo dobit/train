@@ -77,7 +77,7 @@
     <Compile Include="DAL\LoginPageResult.cs" />
     <Compile Include="Common\Mp3.cs" />
     <Compile Include="DAL\PageResult.cs" />
-    <Compile Include="RandCodeType.cs" />
+    <Compile Include="Response\AutoSubmitOrderRequestResponse.cs" />
     <Compile Include="Response\CheckOrderInfoResponse.cs" />
     <Compile Include="Response\CheckRandCodeAnsyn.cs" />
     <Compile Include="Response\CheckResponse.cs" />
@@ -99,7 +99,7 @@
     <Compile Include="BLL\LoginState.cs" />
     <Compile Include="TextValue.cs" />
     <Compile Include="Entity\TicketType.cs" />
-    <Compile Include="AutoVCodeType.cs" />
+    <Compile Include="Entity\RandCodeOrcType.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Tools\VCodeForm.cs">
       <SubType>Form</SubType>

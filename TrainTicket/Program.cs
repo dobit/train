@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace LFNet.TrainTicket
@@ -22,6 +23,7 @@ namespace LFNet.TrainTicket
             fs.Close();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
             MainForm = new MainForm();//Form1();
             Application.Run(MainForm);
@@ -31,6 +33,20 @@ namespace LFNet.TrainTicket
         {
             MessageBox.Show(e.Exception.Message);
             
+        }
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            if (!(e.ExceptionObject is ThreadAbortException))
+            {
+                HandleException((Exception)e.ExceptionObject);
+            }
+        }
+
+        private static void HandleException(Exception e)
+        {
+
+            MessageBox.Show(e.ToString(), "Unhandled exception", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+
         }
 
         public static Form MainForm { get; set; }

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Drawing;
@@ -37,8 +37,8 @@ namespace LFNet.TrainTicket
         public static string ToDisplayString(this List<TrainItemInfo> list)
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("======²éÑ¯µ½ÁĞ³µĞÅÏ¢====");
-            sb.Append("³µ´Î\tÀúÊ±\tÉÌÎñ×ù\tÌØµÈ×ù\tÒ»µÈ×ù\t¶şµÈ×ù\t¸ß¼¶Èí\tÈíÎÔ\tÓ²ÎÔ\tÈí×ù\tÓ²×ù\tÎŞ×ù\tÆäËû\r\n");
+            sb.AppendLine("======æŸ¥è¯¢åˆ°åˆ—è½¦ä¿¡æ¯====");
+            sb.Append("è½¦æ¬¡\tå†æ—¶\tå•†åŠ¡åº§\tç‰¹ç­‰åº§\tä¸€ç­‰åº§\täºŒç­‰åº§\té«˜çº§è½¯\tè½¯å§\tç¡¬å§\tè½¯åº§\tç¡¬åº§\tæ— åº§\tå…¶ä»–\r\n");
             foreach (TrainItemInfo trainItemInfo in list)
             {
                 //if (cbShowRealYp.Checked)
@@ -52,20 +52,20 @@ namespace LFNet.TrainTicket
         }
 
         /// <summary>
-        /// ÑÓÊ±Ö´ĞĞ
+        /// å»¶æ—¶æ‰§è¡Œ
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="task"></param>
         /// <param name="milliseconds"></param>
         public static async void DelayToRun<T>(this Task<T> task, int milliseconds)
         {
-            Thread.Sleep(milliseconds);//ĞİÃßÖ¸¶¨Ê±¼ä
+            Thread.Sleep(milliseconds);//ä¼‘çœ æŒ‡å®šæ—¶é—´
            await task;
            // return "";
         }
 
         /// <summary>
-        /// Í¨¹ı´°Ìå»ñÈ¡ÑéÖ¤Âë
+        /// é€šè¿‡çª—ä½“è·å–éªŒè¯ç 
         /// </summary>
         /// <returns></returns>
         public static async Task<string> GetVCodeByForm(this Image image)
@@ -88,7 +88,7 @@ namespace LFNet.TrainTicket
         }
 
         /// <summary>
-        /// ´ÓHtmlÖĞ»ñÈ¡±íµ¥Öµ
+        /// ä»Htmlä¸­è·å–è¡¨å•å€¼
         /// </summary>
         /// <param name="htmlcontent"></param>
         /// <returns></returns>
@@ -111,7 +111,7 @@ namespace LFNet.TrainTicket
         }
 
         /// <summary>
-        /// ·µ»Øurl±àÂë¸ñÊ½µÄÇëÇó´®
+        /// è¿”å›urlç¼–ç æ ¼å¼çš„è¯·æ±‚ä¸²
         /// </summary>
         /// <param name="forms"></param>
         /// <returns></returns>
@@ -147,16 +147,16 @@ namespace LFNet.TrainTicket
         {
             switch (cardType)
             {
-                case CardType.¶ş´úÉí·İÖ¤:
+                case CardType.äºŒä»£èº«ä»½è¯:
                     return "1";
 
-                case CardType.Ò»´úÉí·İÖ¤:
+                case CardType.ä¸€ä»£èº«ä»½è¯:
                     return "2";
-                case CardType.¸Û°ÄÍ¨ĞĞÖ¤:
+                case CardType.æ¸¯æ¾³é€šè¡Œè¯:
                     return "C";
-                case CardType.Ì¨ÍåÍ¨ĞĞÖ¤:
+                case CardType.å°æ¹¾é€šè¡Œè¯:
                     return "G";
-                case CardType.»¤ÕÕ:
+                case CardType.æŠ¤ç…§:
                     return "B";
                 default:
                     throw new ArgumentOutOfRangeException("cardType");
@@ -184,7 +184,7 @@ namespace LFNet.TrainTicket
 
 
         /// <summary>
-        /// »ñÈ¡×ùÎ»µÄÓàÆ±ĞÅÏ¢
+        /// è·å–åº§ä½çš„ä½™ç¥¨ä¿¡æ¯
         /// </summary>
         /// <param name="seatType"></param>
         /// <returns></returns>
@@ -209,7 +209,7 @@ namespace LFNet.TrainTicket
                 }
                 i += 10;
             }
-            if (seatType == SeatType.ÎŞ×ù) return wz;
+            if (seatType == SeatType.æ— åº§) return wz;
             else
             {
                 return 0;
@@ -232,7 +232,7 @@ namespace LFNet.TrainTicket
         }
 
         /// <summary>
-        /// bin216¼ÓÃÜ
+        /// bin216åŠ å¯†
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>

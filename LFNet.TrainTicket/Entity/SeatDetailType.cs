@@ -1,13 +1,13 @@
-namespace LFNet.TrainTicket.Entity
+锘縩amespace LFNet.TrainTicket.Entity
 {
     /// <summary>
-    /// 铺位信息
+    /// 閾轰綅淇℃伅
     /// </summary>
     public enum SeatDetailType
     {
-        随机 = 0,
-        下铺 = 1,
-        中铺 = 2,
-        上铺 = 3,
+        闅忔満 = 0,
+        涓嬮摵 = 1,
+        涓摵 = 2,
+        涓婇摵 = 3,
     }
 }

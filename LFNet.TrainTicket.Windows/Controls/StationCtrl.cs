@@ -29,6 +29,7 @@ namespace LFNet.TrainTicket.Controls
             comboBox1.DisplayMember = "Name";
             
             listBox1.DataSource = stationInfos;
+            
         }
 
         private void comboBox1_KeyUp(object sender, KeyEventArgs e)
@@ -73,7 +74,11 @@ namespace LFNet.TrainTicket.Controls
             set
             {
                 if (value != null)
-                    comboBox1.SelectedItem = value;
+                {
+                    comboBox1.Text = "";
+                    comboBox1.SelectedText = value.Name;
+                   // comboBox1.SelectedItem = value;
+                }
             }
         }
 

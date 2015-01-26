@@ -36,12 +36,12 @@ namespace LFNet.TrainTicket
             {
                 if (passenger.Checked)
                 {
-                    if (this.client.Passengers.Find(p=>p.Name==passenger.Name)==null)
+                    //if (this.client.Passengers.Find(p=>p.Name==passenger.Name)==null)
                         this.client.Passengers.Add(passenger);
-                    this.passengersCheckedBoxList.Items.Add(passenger.Name,true);
+                    //this.passengersCheckedBoxList.Items.Add(passenger.Name,true);
                 }
             }
-            
+            psControl.Passengers = this.client.Passengers;
             axWindowsMediaPlayer1.PlayStateChange += axWindowsMediaPlayer1_PlayStateChange;
             webBrowser1.Navigate(System.AppDomain.CurrentDomain.BaseDirectory + "music/payme.html"); 
             
@@ -112,7 +112,7 @@ namespace LFNet.TrainTicket
                 tbTime.Focus();
                 return;
             }
-            if (this.client.Passengers.Count(p => p.Checked) == 0)
+            if (this.client.Passengers.Count(p=>p.Checked) == 0)
             {
                 MessageBox.Show("请选择乘客");
                 return;
@@ -206,6 +206,7 @@ namespace LFNet.TrainTicket
         public void StopAll()
         {
             this.Stop = true;
+            this.client.Stop();
             if (axWindowsMediaPlayer1.playState == WMPLib.WMPPlayState.wmppsPlaying)
             {
                 if (this.InvokeRequired)
@@ -292,16 +293,14 @@ namespace LFNet.TrainTicket
 
         }
 
-        void client_PassengersChanged(object sender, ClientEventArgs<List<Passenger>> e)
+        private void client_PassengersChanged(object sender, ClientEventArgs<List<Passenger>> e)
         {
-            foreach (var item in e.State)
+            psControl.Invoke(new Action(() =>
             {
-                if (!this.passengersCheckedBoxList.Items.Contains(item.Name))
-                {
-                    this.passengersCheckedBoxList.Items.Add(item.Name);
-                }
-            }
-           
+                psControl.Passengers = this.client.Passengers;
+            }));
+
+
         }
 
         private void Client_ExcuteStateChanged(object sender, ClientEventArgs<ExcuteState> e)
@@ -332,7 +331,11 @@ namespace LFNet.TrainTicket
 
         private void Client_LoginStateChanged(object sender, ClientEventArgs<LoginState> e)
         {
-            btnLogin.Enabled = e.State != LoginState.Login;
+            btnLogin.Invoke(new Action(() =>
+            {
+                btnLogin.Enabled = e.State != LoginState.Login;
+            }));
+            
             this.Log(e.State.ToString());
         }
 
@@ -354,16 +357,16 @@ namespace LFNet.TrainTicket
                     
                     this.client.Account = accountInfo;
                     this.accountInfoBindingSource.DataSource = this.client.Account;
-                    foreach (Passenger passenger in Global.GetPassengers())
-                    {
-                        if (passenger.Checked)
-                        {
-                            if (this.client.Passengers.Find(p => p.Name == passenger.Name) == null)
-                                this.client.Passengers.Add(passenger);
-                            if(!this.passengersCheckedBoxList.Items.Contains(passenger.Name))
-                            this.passengersCheckedBoxList.Items.Add(passenger.Name, true);
-                        }
-                    }
+                    //foreach (Passenger passenger in Global.GetPassengers())
+                    //{
+                    //    if (passenger.Checked)
+                    //    {
+                    //        if (this.client.Passengers.Find(p => p.Name == passenger.Name) == null)
+                    //            this.client.Passengers.Add(passenger);
+                    //        if(!this.passengersCheckedBoxList.Items.Contains(passenger.Name))
+                    //        this.passengersCheckedBoxList.Items.Add(passenger.Name, true);
+                    //    }
+                    //}
                 }
             }
         }
