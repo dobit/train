@@ -84,10 +84,12 @@ namespace LFNet.TrainTicket.DAL
         /// <returns></returns>
         public static async Task<LoginPageResult> GetLoginPageResult(this Client client)
         {
-          string content=   await GetStringAsync(client, LoginPageUrl, TicketHomePage);
+          string content=   await GetStringAsync(client, LoginPageUrl);//, TicketHomePage);
           DynamicJsResult dynamicJsResult=  await GetDynamicJsAction(client, content, LoginPageUrl);
+          
             LoginPageResult result=new LoginPageResult();
             result.DynamicJsResult = dynamicJsResult;
+            result.RandCodeImage = await InterfaceProvider.GetRandCode(client);
             return result;
         }
 
@@ -720,7 +722,7 @@ namespace LFNet.TrainTicket.DAL
             }
 
             return await AjaxGetToJsonObjectAsync<Response<QueryOrderWaitTimeResponse>>(client,
-                "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?"+new UrlEncodedContent(obj),
+                "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?"+new UrlEncodedContent(obj).ReadAsStringAsync().Result,
                 OrderPageUrl);
         }
 

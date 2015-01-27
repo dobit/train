@@ -31,17 +31,17 @@
             this.components = new System.ComponentModel.Container();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.tabControl = new System.Windows.Forms.TabControl();
-            this.menuStrip = new System.Windows.Forms.MenuStrip();
-            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.NewTaskToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.CloseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuStrip = new System.Windows.Forms.MenuStrip();
+            this.NewTaskToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.系统SToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.OptionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.AboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.PToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuStrip.SuspendLayout();
+            this.AboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.contextMenuStrip.SuspendLayout();
+            this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // statusStrip
@@ -62,6 +62,20 @@
             this.tabControl.Size = new System.Drawing.Size(784, 783);
             this.tabControl.TabIndex = 2;
             // 
+            // contextMenuStrip
+            // 
+            this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.CloseToolStripMenuItem});
+            this.contextMenuStrip.Name = "contextMenuStrip";
+            this.contextMenuStrip.Size = new System.Drawing.Size(117, 26);
+            // 
+            // CloseToolStripMenuItem
+            // 
+            this.CloseToolStripMenuItem.Name = "CloseToolStripMenuItem";
+            this.CloseToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.CloseToolStripMenuItem.Text = "关闭(&C)";
+            this.CloseToolStripMenuItem.Click += new System.EventHandler(this.CloseToolStripMenuItem_Click);
+            // 
             // menuStrip
             // 
             this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -80,20 +94,6 @@
             this.NewTaskToolStripMenuItem.Text = "新建任务(&N)";
             this.NewTaskToolStripMenuItem.Click += new System.EventHandler(this.NewTaskToolStripMenuItem_Click);
             // 
-            // contextMenuStrip
-            // 
-            this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.CloseToolStripMenuItem});
-            this.contextMenuStrip.Name = "contextMenuStrip";
-            this.contextMenuStrip.Size = new System.Drawing.Size(117, 26);
-            // 
-            // CloseToolStripMenuItem
-            // 
-            this.CloseToolStripMenuItem.Name = "CloseToolStripMenuItem";
-            this.CloseToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
-            this.CloseToolStripMenuItem.Text = "关闭(&C)";
-            this.CloseToolStripMenuItem.Click += new System.EventHandler(this.CloseToolStripMenuItem_Click);
-            // 
             // 系统SToolStripMenuItem
             // 
             this.系统SToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -107,22 +107,22 @@
             // OptionToolStripMenuItem
             // 
             this.OptionToolStripMenuItem.Name = "OptionToolStripMenuItem";
-            this.OptionToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.OptionToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
             this.OptionToolStripMenuItem.Text = "选项(&O)";
             this.OptionToolStripMenuItem.Click += new System.EventHandler(this.OptionToolStripMenuItem_Click);
-            // 
-            // AboutToolStripMenuItem1
-            // 
-            this.AboutToolStripMenuItem1.Name = "AboutToolStripMenuItem1";
-            this.AboutToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
-            this.AboutToolStripMenuItem1.Text = "关于(&A)";
             // 
             // PToolStripMenuItem
             // 
             this.PToolStripMenuItem.Name = "PToolStripMenuItem";
-            this.PToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.PToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
             this.PToolStripMenuItem.Text = "乘客设置(&P)";
             this.PToolStripMenuItem.Click += new System.EventHandler(this.PToolStripMenuItem_Click);
+            // 
+            // AboutToolStripMenuItem1
+            // 
+            this.AboutToolStripMenuItem1.Name = "AboutToolStripMenuItem1";
+            this.AboutToolStripMenuItem1.Size = new System.Drawing.Size(139, 22);
+            this.AboutToolStripMenuItem1.Text = "关于(&A)";
             // 
             // MainForm
             // 
@@ -133,10 +133,10 @@
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.menuStrip);
             this.Name = "MainForm";
-            this.Text = "自动购票程序                  作者：dobit QQ:156798087";
+            this.Text = "自动购票程序(dobit版） ";
+            this.contextMenuStrip.ResumeLayout(false);
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
-            this.contextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 

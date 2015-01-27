@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using AxWMPLib;
 using LFNet.Common;
+using LFNet.Configuration;
 using LFNet.TrainTicket.BLL;
 using LFNet.TrainTicket.Common;
 using LFNet.TrainTicket.Config;
@@ -27,12 +28,14 @@ namespace LFNet.TrainTicket
     {
        
         public Client client;
+        public AccountInfo Account;
         private Thread t;
         public ClientControl()
         {
             InitializeComponent();
-            this.client = new Client();
-            this.accountInfoBindingSource.DataSource = this.client.Account;
+            Account = ConfigFileManager.GetConfig<AccountInfo>(true);
+            this.client = new Client(Account);
+            this.accountInfoBindingSource.DataSource = Account;
             BindEvents();
             foreach (Passenger passenger in Global.GetPassengers())
             {
@@ -91,6 +94,9 @@ namespace LFNet.TrainTicket
 
         private void btnQuery_Click(object sender, EventArgs e)
         {
+            this.client.Account = Account;
+            Account.Save();
+            Account.SaveConfig();
             if (string.IsNullOrEmpty(this.client.Account.Username))
             {
                 MessageBox.Show("用户名不能空");
@@ -278,8 +284,10 @@ namespace LFNet.TrainTicket
         /// <param name="e"></param>
         private void btnLogin_Click(object sender, EventArgs e)
         {
-            
-            this.client.Account.Save();
+            this.client.Account = Account;
+            Account.Save();
+            Account.SaveConfig();
+           // ConfigFileManager.SaveConfig<AccountInfo>();
             this.client.Login();
            
         }
@@ -357,8 +365,8 @@ namespace LFNet.TrainTicket
                 if (accountInfo != null)
                 {
                     
-                    this.client.Account = accountInfo;
-                    this.accountInfoBindingSource.DataSource = this.client.Account;
+                   // this.client.Account = accountInfo;
+                    this.accountInfoBindingSource.DataSource = accountInfo;// this.client.Account;
                     
                 }
             }

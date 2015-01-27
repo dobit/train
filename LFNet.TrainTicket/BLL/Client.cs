@@ -112,7 +112,9 @@ namespace LFNet.TrainTicket.BLL
         /// <summary>
         /// 登陆页返回结果
         /// </summary>
-        private DynamicJsResult _loginPageDynamicJsResult = null;
+        private LoginPageResult _loginPageResult = null;
+
+        private DateTime _loginTime;
 
         private LoginState _loginState;
         private ExcuteState _excuteState;
@@ -194,10 +196,16 @@ namespace LFNet.TrainTicket.BLL
             Cookie = new CookieContainer();
             TrainInfos=new List<TrainItemInfo>();
             Passengers=new List<Passenger>();
-            this.OpenQueryPage();
             this.OpenLoginPage();
+           // InitPages();
         }
 
+        //private async Task<bool> InitPages()
+        //{
+        //   await this.OpenQueryPage();
+        //   await this.OpenLoginPage();
+        //   return true;
+        //}
         #endregion
 
         #region Methods
@@ -285,10 +293,19 @@ namespace LFNet.TrainTicket.BLL
             };
                         Cookie.Add(new Uri(ActionUrls.TicketHomePage), clientCollection);
                         //if自动提交
-                        if (await AutoSumbmitOrder(optimizeTrain, passengers, seatType, _queryPageDynamicJsResult)) //成功
+                        try
                         {
-                            return;
+                            if (await AutoSumbmitOrder(optimizeTrain, passengers, seatType, _queryPageDynamicJsResult)) //成功
+                            {
+                                return;
+                            }
                         }
+                        catch (Exception exception)
+                        {
+                            Info(exception.Message);
+                            LogUtil.Log(exception);
+                        }
+                        
 
                         //todo:
                         ////非自动提交
@@ -306,8 +323,8 @@ namespace LFNet.TrainTicket.BLL
 
             if (!_stop)
             {
-                Info("" + ConfigFileManager.GetConfig<SystemConfig>().QueryWaitSeconds+"s 继续查询");
-                Thread.Sleep(ConfigFileManager.GetConfig<SystemConfig>().QueryWaitSeconds*1000);
+                Info("" + ConfigFileManager.GetConfig<SystemConfig>().QueryWaitDelay+"ms 继续查询");
+                Thread.Sleep(ConfigFileManager.GetConfig<SystemConfig>().QueryWaitDelay);
                 goto QueryTickets;
             }
 
@@ -580,21 +597,46 @@ namespace LFNet.TrainTicket.BLL
             try
             {
                 //todo:检查用户状态
-                if (LoginState == LoginState.Login) return true;
+                if (await this.CheckUserState()) return true;
                 //打开登陆页面
-                var loginPageResult = await this.GetLoginPageResult();
+                await this.OpenLoginPage();
+               // var loginPageResult = await this.GetLoginPageResult();
+                //输入用户名密码花费时间
+                int sleeptime =(int)( ConfigFileManager.GetConfig<SystemConfig>().InputUserNamePasswordDelay -
+                                (DateTime.Now - _loginPageTime).TotalMilliseconds);
+                if (sleeptime > 0)
+                {
+                    Thread.Sleep(sleeptime); //输入账号密码延时
+                }
+                randCode:
+                var randCode = await GetRandCode(0,_loginPageResult.RandCodeImage);
+                _loginPageResult.RandCodeImage = null;//使用完后去除
 
-                var randCode = await GetRandCode();
+                //单击登陆按钮前等待
+                Thread.Sleep(ConfigFileManager.GetConfig<SystemConfig>().LoginBtnClickDelay); //输入账号密码延时
 
-                //Thread.Sleep(5000); //单击等待
+                //新增登陆前检擦
+                Response<CheckRandCodeAnsynResponse> checkRandCodeAnsynResponse = await this.CheckRandCodeAnsyn(randCode, 0, "");
+                if (checkRandCodeAnsynResponse.data == null || checkRandCodeAnsynResponse.data.result != "1")
+                {
+                    if (checkRandCodeAnsynResponse.messages != null && checkRandCodeAnsynResponse.messages.Count > 0)
+                        Info(checkRandCodeAnsynResponse.messages[0].ToString());
+                    Info("验证码不正确");
+                    goto randCode;
+                }
                 Response<LoginAysnSuggestResponse> response =
                     await
                         this.LoginAsynSuggest(this.Account.Username, this.Account.Password, randCode,
-                            loginPageResult.DynamicJsResult.Key, loginPageResult.DynamicJsResult.Value);
+                            _loginPageResult.DynamicJsResult.Key, _loginPageResult.DynamicJsResult.Value);
                 if (response.data != null && response.data.loginCheck == "Y")
                 {
                     Info("登录成功");
+                    _loginPageResult = null;
+                    _loginPageTime = DateTime.MinValue;
+                    _loginTime = DateTime.Now;
                     LoginState = LoginState.Login;
+
+                    await OpenQueryPage();
                     //刷新乘客信息
                     Task<bool> refreshPassengers = RefreshPassengers();
                     await refreshPassengers;
@@ -615,6 +657,15 @@ namespace LFNet.TrainTicket.BLL
             }
         }
 
+        /// <summary>
+        /// 检查用户登录状态
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> CheckUserState()
+        {
+            if (LoginState == LoginState.Login) return true;
+            return false;
+        }
         #endregion
 
         #region Passengers
@@ -626,7 +677,7 @@ namespace LFNet.TrainTicket.BLL
         /// <returns></returns>
         public async Task<bool> RefreshPassengers(string submitToken = "")
         {
-           await OpenQueryPage();
+           
             Response<GetPassengerDTOs> response = await this.GetPassengers(submitToken);
 
             if (response.data != null)
@@ -780,11 +831,11 @@ namespace LFNet.TrainTicket.BLL
         {
             try
             {
-                if (_loginPageDynamicJsResult == null || (DateTime.Now - _loginPageTime).TotalMinutes > 20)
+                if (_loginPageResult == null || (DateTime.Now - _loginPageTime).TotalMinutes > 20)
                 {
-                    var queryPageResult = await this.GetLoginPageResult();
+                    var loginPageResult = await this.GetLoginPageResult();
                     //查询准备 打开查询页 获取页面动态js结果
-                    _loginPageDynamicJsResult = queryPageResult.DynamicJsResult;
+                    _loginPageResult = loginPageResult;
                     _loginPageTime = DateTime.Now;
                     return true;
                 }
@@ -841,27 +892,26 @@ namespace LFNet.TrainTicket.BLL
         {
             do
             {
-                DateTime gTime = DateTime.MinValue;
-                if (image != null)
+               // DateTime gTime = DateTime.MinValue;
+                if (image == null)
                 {
                     image = await InterfaceProvider.GetRandCode(this, type);
-                    gTime = DateTime.Now;
+                   // gTime = DateTime.Now;
                 }
-                var task = GetValidRandCode(image, type);
-                string vcode = await task;
+                string vcode = await GetValidRandCode(image, type);
                 if (!string.IsNullOrEmpty(vcode))
                 {
-                    DateTime bTime = DateTime.Now;
-                    TimeSpan timeSpan =
-                        new TimeSpan(0, 0, 0, ConfigFileManager.GetConfig<SystemConfig>().RandCodeWaitSeconds) -
-                        (bTime - gTime);
+                    //DateTime bTime = DateTime.Now;
+                    //TimeSpan timeSpan =
+                    //    new TimeSpan(0, 0, 0, ConfigFileManager.GetConfig<SystemConfig>().RandCodeWaitSeconds) -
+                    //    (bTime - gTime);
                     
                     
-                    if (timeSpan.TotalMilliseconds > 0)
-                    {
-                        Info("wait:" + timeSpan);
-                        Thread.Sleep(timeSpan);
-                    }
+                    //if (timeSpan.TotalMilliseconds > 0)
+                    //{
+                    //    Info("wait:" + timeSpan);
+                    //    Thread.Sleep(timeSpan);
+                    //}
                     return vcode;
                 }
                 image = null;
@@ -872,12 +922,11 @@ namespace LFNet.TrainTicket.BLL
         private async Task<string> GetValidRandCode(Image image,int type)
         {
             var codeByForm = image.GetVCodeByForm();
-            Thread.Sleep(ConfigFileManager.GetConfig<SystemConfig>().RandCodeCheckWaitSeconds * 1000); //等待5s 输入时间
+            //Thread.Sleep(ConfigFileManager.GetConfig<SystemConfig>().RandCodeCheckWaitSeconds * 1000); //等待5s 输入时间
             string  vcode = await codeByForm;
             if (_stop) return vcode;
             if (string.IsNullOrEmpty(vcode)) return "";
             var checkRandCodeAnsynResponse = await this.CheckRandCodeAnsyn(vcode, type, "");
-
             if (checkRandCodeAnsynResponse.data != null && checkRandCodeAnsynResponse.data.result == "1")
             {
                 return vcode;

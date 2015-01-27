@@ -100,6 +100,7 @@ namespace LFNet.TrainTicket.Tools
             this.tbCode.Name = "tbCode";
             this.tbCode.Size = new System.Drawing.Size(143, 21);
             this.tbCode.TabIndex = 1;
+            this.tbCode.TextChanged += new System.EventHandler(this.tbCode_TextChanged);
             // 
             // button1
             // 
@@ -136,6 +137,11 @@ namespace LFNet.TrainTicket.Tools
             this.ResumeLayout(false);
             this.PerformLayout();
 
+        }
+
+        private void tbCode_TextChanged(object sender, EventArgs e)
+        {
+            if (tbCode.Text.Length == 4) this.button1.PerformClick();
         }
     }
 }

@@ -2,6 +2,8 @@
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+using LFNet.Configuration;
+using LFNet.TrainTicket.Config;
 
 namespace LFNet.TrainTicket
 {
@@ -25,6 +27,7 @@ namespace LFNet.TrainTicket
             Application.SetCompatibleTextRenderingDefault(false);
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+            ConfigFileManager.GetConfig<SystemConfig>(true);
             MainForm = new MainForm();//Form1();
             Application.Run(MainForm);
         }
