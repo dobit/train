@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using LFNet.Common;
 using LFNet.Configuration;
 using LFNet.Net.Http;
 using LFNet.TrainTicket.BLL;
@@ -237,10 +238,14 @@ namespace LFNet.TrainTicket.DAL
 
             
             Regex postUrlRegex = new Regex(@"/otn/dynamicJs/(.*?)'", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            string postUrl = new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + postUrlRegex.Match(jsContent).Groups[1]).ToString();
+            if (postUrlRegex.Matches(jsContent).Count > 1)
+            {
+                string postUrl =
+                    new Uri(new Uri(pageUrl), "/otn/dynamicJs/" + postUrlRegex.Match(jsContent).Groups[1]).ToString();
 
-            Task<string> postDynamicJsStringAsync = PostDynamicJsStringAsync(client, LoginPageUrl, postUrl);
-            postDynamicJsStringAsync.DelayToRun(1000);
+                Task<string> postDynamicJsStringAsync = PostDynamicJsStringAsync(client, LoginPageUrl, postUrl);
+                postDynamicJsStringAsync.DelayToRun(1000);
+            }
             return result;
 
         }
@@ -312,14 +317,23 @@ namespace LFNet.TrainTicket.DAL
         /// <param name="fromStationTeleCode"></param>
         /// <param name="toStationTeleCode"></param>
         /// <param name="type"></param>
-        public static async void QueryTLog(this Client client, DateTime trainDate, string fromStationTeleCode,
+        public static async void QueryLog(this Client client, DateTime trainDate, string fromStationTeleCode,
             string toStationTeleCode, int type = 0)
         {
-            string purpose_codes = type == 0 ? "ADULT" : "STUDENT";
-            string url = string.Format("https://kyfw.12306.cn/otn/leftTicket/log?leftTicketDTO.train_date={0}&leftTicketDTO.from_station={1}&leftTicketDTO.to_station={2}&purpose_codes={3}"
-                , trainDate.ToString("yyyy-MM-dd"), fromStationTeleCode, toStationTeleCode, purpose_codes);
+            try
+            {
+                string purpose_codes = type == 0 ? "ADULT" : "STUDENT";
+                string url =
+                    string.Format(
+                        "https://kyfw.12306.cn/otn/leftTicket/log?leftTicketDTO.train_date={0}&leftTicketDTO.from_station={1}&leftTicketDTO.to_station={2}&purpose_codes={3}"
+                        , trainDate.ToString("yyyy-MM-dd"), fromStationTeleCode, toStationTeleCode, purpose_codes);
 
-          await   AjaxGetStringAsync(client, url, QueryPageUrl);
+                await AjaxGetStringAsync(client, url, QueryPageUrl);
+            }
+            catch (Exception ex)
+            {
+                LogUtil.Log(ex);
+            }
         }
 
         /// <summary>
@@ -871,6 +885,7 @@ namespace LFNet.TrainTicket.DAL
             httpClient.DefaultRequestHeaders.Add("Accept-Language", "zh-CN,zh;q=0.8");
             httpClient.DefaultRequestHeaders.Add("DNT", "1");
             httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            
             return httpClient;
         }
 

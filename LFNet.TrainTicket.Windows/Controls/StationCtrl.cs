@@ -40,20 +40,30 @@ namespace LFNet.TrainTicket.Controls
             {
                 if (listBox1.SelectedIndex < listBox1.Items.Count)
                 listBox1.SelectedIndex++;
-                comboBox1.SelectedText = listBox1.SelectedItem.ToString();
-                
+                //comboBox1.SelectedText = listBox1.SelectedItem.ToString();
+                comboBox1.SelectedItem = stationInfos.FirstOrDefault(p => p.Name == listBox1.SelectedItem.ToString());
             }
             else if( e.KeyCode == Keys.Up)
             {
                 if(listBox1.SelectedIndex>0)
                     listBox1.SelectedIndex--;
-                comboBox1.SelectedText = listBox1.SelectedItem.ToString();
+                //comboBox1.SelectedText = listBox1.SelectedItem.ToString();
+                comboBox1.SelectedItem = stationInfos.FirstOrDefault(p => p.Name == listBox1.SelectedItem.ToString());
+            }
+            else if (e.KeyCode == Keys.Enter)
+            {
+                if (listBox1.SelectedItem != null)
+                {
+                    //comboBox1.Text = "";
+                    //comboBox1.SelectedText = listBox1.SelectedItem.ToString();
+                    comboBox1.SelectedItem = stationInfos.FirstOrDefault(p => p.Name == listBox1.SelectedItem.ToString());
+                }
             }
             else
             {
                 listBox1.DataSource = stationInfos.Where(
                     p =>
-                    p.PY.StartsWith(comboBox1.Text, StringComparison.OrdinalIgnoreCase)||p.Name.StartsWith(comboBox1.Text, StringComparison.OrdinalIgnoreCase))
+                    p.PY.StartsWith(comboBox1.Text, StringComparison.OrdinalIgnoreCase) || p.Name.StartsWith(comboBox1.Text, StringComparison.OrdinalIgnoreCase) || p.PinYin.StartsWith(comboBox1.Text, StringComparison.OrdinalIgnoreCase))
                     .Union(stationInfos.Where(p => p.Name.Contains(comboBox1.Text))).Select(p => p.Name).ToArray();
             }
          
@@ -75,9 +85,9 @@ namespace LFNet.TrainTicket.Controls
             {
                 if (value != null)
                 {
-                    comboBox1.Text = "";
-                    comboBox1.SelectedText = value.Name;
-                   // comboBox1.SelectedItem = value;
+                    //comboBox1.Text = "";
+                    //comboBox1.SelectedText = value.Name;
+                    comboBox1.SelectedItem =stationInfos.FirstOrDefault(p => p.Name == value.Name);// value;
                 }
             }
         }
@@ -109,8 +119,15 @@ namespace LFNet.TrainTicket.Controls
         private void listBox1_Click(object sender, EventArgs e)
         {
             //comboBox1.Text = "";
-            comboBox1.Text = listBox1.SelectedItem.ToString();
+            //comboBox1.SelectedText = listBox1.SelectedItem.ToString();
+            comboBox1.SelectedItem = stationInfos.FirstOrDefault(p => p.Name == listBox1.SelectedItem.ToString());
             listBox1.Visible = false;
+        }
+
+        private void listBox1_KeyUp(object sender, KeyEventArgs e)
+        {
+            //comboBox1.Text = listBox1.SelectedItem.ToString();
+            //listBox1.Visible = false;
         }
     }
 }

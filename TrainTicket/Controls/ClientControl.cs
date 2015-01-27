@@ -137,7 +137,7 @@ namespace LFNet.TrainTicket
             
             if (MessageBox.Show(confirmText, "请确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                Stop = false;
+               
                 btnQuery.Enabled = false;
                 btnStop.Enabled = true;
                
@@ -146,7 +146,6 @@ namespace LFNet.TrainTicket
             }
         }
 
-        private bool Stop;
         public void Run(object accountObject)
         {
             client.Run();//客户端执行
@@ -213,7 +212,7 @@ namespace LFNet.TrainTicket
 
         public void StopAll()
         {
-            this.Stop = true;
+           // this.Stop = true;
             this.client.Stop();
             if (axWindowsMediaPlayer1.playState == WMPLib.WMPPlayState.wmppsPlaying)
             {
@@ -367,9 +366,25 @@ namespace LFNet.TrainTicket
                     
                    // this.client.Account = accountInfo;
                     this.accountInfoBindingSource.DataSource = accountInfo;// this.client.Account;
-                    
+                    Account = accountInfo;
                 }
             }
+        }
+
+        private void tbPassword_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                btnLogin.PerformClick();
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var temp = FromStationCtrl.SelectedValue;// this.Account.FromStationInfo;
+            FromStationCtrl.SelectedValue = ToStationCtrl.SelectedValue;
+            ToStationCtrl.SelectedValue = temp;
+
         }
 
         

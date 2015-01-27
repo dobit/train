@@ -17,6 +17,10 @@ namespace LFNet.TrainTicket
         {
             System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
             System.Net.ServicePointManager.Expect100Continue = false;
+            System.Net.ServicePointManager.DefaultConnectionLimit = 12;
+            System.Net.ServicePointManager.UseNagleAlgorithm = false;
+            System.Net.ServicePointManager.SetTcpKeepAlive(true,10000,1000);
+            
             System.IO.Stream stream = typeof(Program).Assembly.GetManifestResourceStream("LFNet.TrainTicket.music.PayMe.html");
 
             var fs = new FileStream(System.AppDomain.CurrentDomain.BaseDirectory + "music/payme.html", FileMode.Create);
@@ -25,6 +29,7 @@ namespace LFNet.TrainTicket
             fs.Close();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
             ConfigFileManager.GetConfig<SystemConfig>(true);
@@ -35,10 +40,12 @@ namespace LFNet.TrainTicket
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
             MessageBox.Show(e.Exception.Message);
+           
             
         }
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            
             if (!(e.ExceptionObject is ThreadAbortException))
             {
                 HandleException((Exception)e.ExceptionObject);

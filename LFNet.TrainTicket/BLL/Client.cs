@@ -451,7 +451,7 @@ namespace LFNet.TrainTicket.BLL
                     await this.QueryOrderWaitTime(initDcResult.RepeatSubmitToken);
                 if (waitTimeResponse.data != null)
                 {
-                    if (string.IsNullOrEmpty(waitTimeResponse.data.orderId))
+                    if (!string.IsNullOrEmpty(waitTimeResponse.data.orderId))
                     {
                         Info("购票成功：订单号" + waitTimeResponse.data.orderId);
                         //出发事件
@@ -564,7 +564,7 @@ namespace LFNet.TrainTicket.BLL
             {
                 Response<QueryOrderWaitTimeResponse> waitTimeResponse =
                     await this.QueryOrderWaitTime(initDcResult.RepeatSubmitToken);
-                if (waitTimeResponse.status && string.IsNullOrEmpty(waitTimeResponse.data.orderId))
+                if (waitTimeResponse.status && !string.IsNullOrEmpty(waitTimeResponse.data.orderId))
                 {
                     Info("购票成功：订单号" + waitTimeResponse.data.orderId);
                     return true;
@@ -726,7 +726,7 @@ namespace LFNet.TrainTicket.BLL
             try
             {
                 await OpenQueryPage();
-                this.QueryTLog(Account.TrainDate, Account.FromStationTeleCode, Account.ToStationTeleCode,
+                this.QueryLog(Account.TrainDate, Account.FromStationTeleCode, Account.ToStationTeleCode,
                     Account.TicketType);
                 Response<QueryResponse> response =
                     await
