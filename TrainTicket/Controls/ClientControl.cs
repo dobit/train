@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using AxWMPLib;
 using LFNet.Common;
+using LFNet.Common.Reflection;
 using LFNet.Configuration;
 using LFNet.TrainTicket.BLL;
 using LFNet.TrainTicket.Common;
@@ -34,7 +35,7 @@ namespace LFNet.TrainTicket
         {
             InitializeComponent();
             Account = ConfigFileManager.GetConfig<AccountInfo>(true);
-            this.client = new Client(Account);
+            this.client = new Client();
             this.accountInfoBindingSource.DataSource = Account;
             BindEvents();
             foreach (Passenger passenger in Global.GetPassengers())
@@ -94,7 +95,7 @@ namespace LFNet.TrainTicket
 
         private void btnQuery_Click(object sender, EventArgs e)
         {
-            this.client.Account = Account;
+            this.client.Account = ObjectCopier.BinaryClone(Account) as AccountInfo;
             Account.Save();
             Account.SaveConfig();
             if (string.IsNullOrEmpty(this.client.Account.Username))
@@ -283,7 +284,7 @@ namespace LFNet.TrainTicket
         /// <param name="e"></param>
         private void btnLogin_Click(object sender, EventArgs e)
         {
-            this.client.Account = Account;
+            this.client.Account = ObjectCopier.BinaryClone(Account) as AccountInfo;
             Account.Save();
             Account.SaveConfig();
            // ConfigFileManager.SaveConfig<AccountInfo>();
@@ -360,10 +361,9 @@ namespace LFNet.TrainTicket
         {
             if (tbUsername.Text.Trim().Length > 4)
             {
-                AccountInfo accountInfo = AccountManager.GetAccountInfo(tbUsername.Text.Trim());
+                AccountInfo accountInfo =ObjectCopier.BinaryClone(AccountManager.GetAccountInfo(tbUsername.Text.Trim())) as  AccountInfo;
                 if (accountInfo != null)
                 {
-                    
                    // this.client.Account = accountInfo;
                     this.accountInfoBindingSource.DataSource = accountInfo;// this.client.Account;
                     Account = accountInfo;
@@ -381,10 +381,22 @@ namespace LFNet.TrainTicket
 
         private void button1_Click(object sender, EventArgs e)
         {
+            this.accountInfoBindingSource.SuspendBinding();
             var temp = FromStationCtrl.SelectedValue;// this.Account.FromStationInfo;
+            this.Account.FromStationInfo = ToStationCtrl.SelectedValue;
+            this.Account.ToStationInfo = temp;
             FromStationCtrl.SelectedValue = ToStationCtrl.SelectedValue;
             ToStationCtrl.SelectedValue = temp;
+            this.accountInfoBindingSource.ResumeBinding();
 
+        }
+
+        private void tbUsername_TextChanged(object sender, EventArgs e)
+        {
+            if (this.Parent != null)
+            {
+                Parent.Text = tbUsername.Text;
+            }
         }
 
         

@@ -30,8 +30,8 @@ namespace LFNet.TrainTicket
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            LFNet.TrainTicket.Entity.StationInfo stationInfo5 = new LFNet.TrainTicket.Entity.StationInfo();
-            LFNet.TrainTicket.Entity.StationInfo stationInfo6 = new LFNet.TrainTicket.Entity.StationInfo();
+            LFNet.TrainTicket.Entity.StationInfo stationInfo1 = new LFNet.TrainTicket.Entity.StationInfo();
+            LFNet.TrainTicket.Entity.StationInfo stationInfo2 = new LFNet.TrainTicket.Entity.StationInfo();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ClientControl));
             this.adPanel = new System.Windows.Forms.Panel();
             this.webBrowser1 = new System.Windows.Forms.WebBrowser();
@@ -45,6 +45,7 @@ namespace LFNet.TrainTicket
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.lbPassengers = new System.Windows.Forms.RichTextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.ToStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
             this.FromStationCtrl = new LFNet.TrainTicket.Controls.StationCtrl();
             this.psControl = new LFNet.TrainTicket.Controls.PassengersControl();
@@ -70,7 +71,6 @@ namespace LFNet.TrainTicket
             this.label9 = new System.Windows.Forms.Label();
             this.关于AToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.axWindowsMediaPlayer1 = new AxWMPLib.AxWindowsMediaPlayer();
-            this.button1 = new System.Windows.Forms.Button();
             this.adPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.accountInfoBindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -111,6 +111,7 @@ namespace LFNet.TrainTicket
             this.tbUsername.Size = new System.Drawing.Size(191, 21);
             this.tbUsername.TabIndex = 1;
             this.toolTip1.SetToolTip(this.tbUsername, "登陆用的用户名");
+            this.tbUsername.TextChanged += new System.EventHandler(this.tbUsername_TextChanged);
             this.tbUsername.KeyUp += new System.Windows.Forms.KeyEventHandler(this.tbUsername_KeyUp);
             this.tbUsername.Leave += new System.EventHandler(this.tbUsername_Leave);
             // 
@@ -221,17 +222,29 @@ namespace LFNet.TrainTicket
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "购票设置";
             // 
+            // button1
+            // 
+            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.button1.Location = new System.Drawing.Point(195, 22);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(38, 23);
+            this.button1.TabIndex = 37;
+            this.button1.Text = "<=>";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // ToStationCtrl
             // 
             this.ToStationCtrl.AutoSize = true;
             this.ToStationCtrl.DataBindings.Add(new System.Windows.Forms.Binding("SelectedValue", this.accountInfoBindingSource, "ToStationInfo", true));
             this.ToStationCtrl.Location = new System.Drawing.Point(285, 23);
             this.ToStationCtrl.Name = "ToStationCtrl";
-            stationInfo5.Code = null;
-            stationInfo5.Id = null;
-            stationInfo5.Name = null;
-            stationInfo5.PY = null;
-            this.ToStationCtrl.SelectedValue = stationInfo5;
+            stationInfo1.Code = null;
+            stationInfo1.Id = null;
+            stationInfo1.Name = null;
+            stationInfo1.PinYin = null;
+            stationInfo1.PY = null;
+            this.ToStationCtrl.SelectedValue = stationInfo1;
             this.ToStationCtrl.Size = new System.Drawing.Size(124, 23);
             this.ToStationCtrl.TabIndex = 5;
             // 
@@ -241,11 +254,12 @@ namespace LFNet.TrainTicket
             this.FromStationCtrl.DataBindings.Add(new System.Windows.Forms.Binding("SelectedValue", this.accountInfoBindingSource, "FromStationInfo", true));
             this.FromStationCtrl.Location = new System.Drawing.Point(68, 23);
             this.FromStationCtrl.Name = "FromStationCtrl";
-            stationInfo6.Code = null;
-            stationInfo6.Id = null;
-            stationInfo6.Name = null;
-            stationInfo6.PY = null;
-            this.FromStationCtrl.SelectedValue = stationInfo6;
+            stationInfo2.Code = null;
+            stationInfo2.Id = null;
+            stationInfo2.Name = null;
+            stationInfo2.PinYin = null;
+            stationInfo2.PY = null;
+            this.FromStationCtrl.SelectedValue = stationInfo2;
             this.FromStationCtrl.Size = new System.Drawing.Size(124, 23);
             this.FromStationCtrl.TabIndex = 4;
             // 
@@ -473,17 +487,6 @@ namespace LFNet.TrainTicket
             this.axWindowsMediaPlayer1.Size = new System.Drawing.Size(75, 23);
             this.axWindowsMediaPlayer1.TabIndex = 31;
             this.axWindowsMediaPlayer1.Visible = false;
-            // 
-            // button1
-            // 
-            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.button1.Location = new System.Drawing.Point(195, 22);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(38, 23);
-            this.button1.TabIndex = 37;
-            this.button1.Text = "<=>";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // ClientControl
             // 

@@ -79,7 +79,7 @@ namespace LFNet.TrainTicket
                     ret = vCodeForm.Value.Trim();
                 }
                 else
-                    ret = "";
+                    ret = "BREAK";
                 vCodeForm.Dispose();
                 System.GC.ReRegisterForFinalize(vCodeForm);
                 return ret;
