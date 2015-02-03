@@ -10,6 +10,8 @@
         public int waitCount { get; set; }
         public string tourFlag { get; set; }
         public string orderId { get; set; }
+
+        public string msg { get; set; }
     }
 
 

@@ -567,7 +567,13 @@ namespace LFNet.TrainTicket.BLL
                     Info("购票成功：订单号" + waitTimeResponse.data.orderId);
                     return true;
                 }
-                Thread.Sleep(waitTimeResponse.data.waitTime * 1000);
+                if (waitTimeResponse.data.waitTime > 0)
+                    Thread.Sleep(waitTimeResponse.data.waitTime*1000);
+                else
+                {
+                    Info("" + waitTimeResponse.data.msg);
+                    return false;
+                }
 
             } while (!_stop);
             return false;
@@ -592,6 +598,7 @@ namespace LFNet.TrainTicket.BLL
         /// <returns>登录时否成功</returns>
         public async Task<bool> Login()
         {
+            _stop = false;
             try
             {
                 //todo:检查用户状态
@@ -948,7 +955,7 @@ namespace LFNet.TrainTicket.BLL
 
         private async void Info(string message)
         {
-            if (message.Contains("登录"))
+            if (message.Contains("未登录") || message.Contains("需要登录"))
             {
                 LoginState=LoginState.UnLogin;
                 this.Login();
