@@ -598,7 +598,7 @@ namespace LFNet.TrainTicket.BLL
         /// <returns>登录时否成功</returns>
         public async Task<bool> Login()
         {
-            _stop = false;
+            //_stop = false;
             try
             {
                 //todo:检查用户状态
@@ -669,7 +669,23 @@ namespace LFNet.TrainTicket.BLL
         public async Task<bool> CheckUserState()
         {
             //todo://需要检查用户登陆状态
-            if (LoginState == LoginState.Login) return true;
+            if (LoginState == LoginState.Login)
+            {
+                if (_loginTime < DateTime.Now.AddMinutes(-5))
+                {
+                  var loginState= await  this.CheckState();
+                    if (loginState == LoginState.Login)
+                    {
+                        _loginTime = DateTime.Now;
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
             return false;
         }
         #endregion

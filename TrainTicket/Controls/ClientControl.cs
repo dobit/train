@@ -399,6 +399,5 @@ namespace LFNet.TrainTicket
             }
         }
 
-        
-    }
+        }
 }
