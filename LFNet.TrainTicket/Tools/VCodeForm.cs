@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Media;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using LFNet.TrainTicket.Common;
 
@@ -25,6 +26,13 @@ namespace LFNet.TrainTicket.Tools
             this.pictureBox1.Image = image;
             tbCode.Text = new Cracker().Read(new Bitmap(image));
            new System.Threading.Thread(PlaySound){IsBackground=true}.Start();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            SetForegroundWindow(this.Handle);
+            this.tbCode.Focus();
         }
 
         private SoundPlayer soundPlayer;
@@ -55,6 +63,10 @@ namespace LFNet.TrainTicket.Tools
           
        }
 
+       [DllImport("user32.dll")]
+       public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        
 
         public string Value
         {
